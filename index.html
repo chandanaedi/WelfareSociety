@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>වික්‍රමරත්න සමූහ ව්‍යාපාරය - සේවක සුභසාධක සමිතිය</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <style>
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-voucher, #printable-voucher *, #report-print-area, #report-print-area * {
+        visibility: visible;
+      }
+      #printable-voucher, #report-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- LOGIN SCREEN CONTAINER -->
+  <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3 shadow-inner">
+          <i class="fa-solid fa-users-gear"></i>
+        </div>
+        <h1 class="text-xl font-bold text-slate-900">වික්‍රමරත්න සමූහ ව්‍යාපාරය</h1>
+        <p class="text-xs text-slate-500 mt-1">සේවක සුභසාධක සමිතිය - කළමනාකරණ පද්ධතිය</p>
+      </div>
+
+      <form id="login-form" class="space-y-5">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Username</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="fa-solid fa-user text-sm"></i>
+            </span>
+            <input type="text" id="login-username" required placeholder="Enter your username" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="fa-solid fa-lock text-sm"></i>
+            </span>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+          </div>
+        </div>
+
+        <div id="login-error" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 font-medium text-center"></div>
+
+        <button type="submit" id="login-btn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
+          <span>Login to System</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-container" class="flex flex-1 overflow-hidden hidden">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between p-4 shadow-lg shrink-0">
+      <div>
+        <div class="px-2 py-4 border-b border-slate-700">
+          <h1 class="text-lg font-bold tracking-wide text-emerald-400">වික්‍‍රමරත්න සමූහ ව්‍යාපාරය</h1>
+          <p class="text-xs text-slate-400">සේවක සුභසාධක සමිතිය</p>
+        </div>
+        <nav class="mt-6 space-y-1">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg bg-emerald-600 text-white">
+            <i class="fa-solid fa-chart-pie w-6"></i> Dashboard
+          </button>
+          <button onclick="switchTab('employees')" id="nav-employees" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-users w-6"></i> Employees
+          </button>
+          <button onclick="switchTab('masterdata')" id="nav-masterdata" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-sitemap w-6"></i> Companies, Branches & Depts
+          </button>
+          <button onclick="switchTab('transactions')" id="nav-transactions" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-file-invoice-dollar w-6"></i> Transactions
+          </button>
+          <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-chart-line w-6"></i> Reports
+          </button>
+          <button onclick="switchTab('users')" id="nav-users" class="nav-btn admin-only hidden w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-user-shield w-6"></i> Users
+          </button>
+        </nav>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Logged-in User Information Display -->
+        <div class="px-3 py-2 bg-slate-800/80 border border-slate-700/50 rounded-lg flex items-center justify-between">
+          <div class="flex items-center gap-2 overflow-hidden">
+            <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+              <i class="fa-solid fa-user font-normal"></i>
+            </div>
+            <div class="truncate">
+              <p id="sidebar-username" class="text-xs font-bold text-slate-200 truncate">Username</p>
+              <p id="sidebar-userrole" class="text-[10px] text-emerald-400 font-semibold uppercase">Role</p>
+            </div>
+          </div>
+          <button onclick="window.logoutUser()" title="Logout" class="text-slate-400 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-slate-700/50">
+            <i class="fa-solid fa-power-off text-sm"></i>
+          </button>
+        </div>
+
+        <div class="px-2 py-1.5 bg-slate-800/40 rounded-lg text-[11px] text-slate-400 text-center">
+          System Status: <span class="text-emerald-400 font-bold">Online</span>
+        </div>
+        <div class="text-[11px] text-slate-400 text-center tracking-tight pt-2 border-t border-slate-800">
+          Developed by: <span class="text-slate-200 font-medium">Chandana Edirisinghe</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-8 flex flex-col justify-between">
+      <div>
+        <!-- Top Header -->
+        <header class="flex justify-between items-center mb-8 border-b pb-4 border-slate-200">
+          <div>
+            <h2 id="page-title" class="text-2xl font-bold text-slate-800">Dashboard</h2>
+            <p class="text-xs text-slate-500">සමිතියේ වත්මන් මූල්‍ය හා සාමාජික තොරතුරු</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="window.openEmployeeModalForAdd()" class="action-btn bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+              <i class="fa-solid fa-user-plus"></i> නව සේවකයෙකු
+            </button>
+            <button onclick="window.openTxnModalForAdd()" class="action-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+              <i class="fa-solid fa-plus-circle"></i> Transaction එකක් එක් කරන්න
+            </button>
+          </div>
+        </header>
+
+        <!-- TAB 1: DASHBOARD VIEW -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+              <div>
+                <p class="text-xs font-semibold uppercase text-slate-400">Account Balance</p>
+                <h3 id="stat-balance" class="text-2xl font-bold text-emerald-600 mt-1">LKR 0.00</h3>
+              </div>
+              <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-xl">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+              <div>
+                <p class="text-xs font-semibold uppercase text-slate-400">Active Members</p>
+                <h3 id="stat-active-emp" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+              </div>
+              <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+              <div>
+                <p class="text-xs font-semibold uppercase text-slate-400">Monthly Income</p>
+                <h3 id="stat-monthly-income" class="text-2xl font-bold text-emerald-500 mt-1">LKR 0.00</h3>
+              </div>
+              <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-xl">
+                <i class="fa-solid fa-arrow-down"></i>
+              </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+              <div>
+                <p class="text-xs font-semibold uppercase text-slate-400">Monthly Expense</p>
+                <h3 id="stat-monthly-expense" class="text-2xl font-bold text-red-500 mt-1">LKR 0.00</h3>
+              </div>
+              <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center text-xl">
+                <i class="fa-solid fa-arrow-up"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">අලුත්ම ගනුදෙනු (Recent Transactions)</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase">
+                    <th class="py-3 px-2">TXN No</th>
+                    <th class="py-3 px-2">Date</th>
+                    <th class="py-3 px-2">Description</th>
+                    <th class="py-3 px-2">Category</th>
+                    <th class="py-3 px-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-tx-table" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="5" class="text-center py-4 text-slate-400">දත්ත ලෝඩ් වෙමින් පවතී...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: EMPLOYEES VIEW & REPORT VIEWER -->
+        <section id="tab-employees" class="tab-content hidden space-y-6">
+          <div class="bg-slate-800 text-white p-5 rounded-xl shadow-sm space-y-4">
+            <h4 class="text-md font-bold text-emerald-400 flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice"></i> Employee Specific Report Viewer
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-slate-800 text-sm">
+              <select id="emp-rpt-company" onchange="window.filterEmployeeReport()" class="p-2 rounded border">
+                <option value="">All Companies</option>
+              </select>
+              <select id="emp-rpt-branch" onchange="window.filterEmployeeReport()" class="p-2 rounded border">
+                <option value="">All Branches</option>
+              </select>
+              <select id="emp-rpt-dept" onchange="window.filterEmployeeReport()" class="p-2 rounded border">
+                <option value="">All Divisions/Depts</option>
+              </select>
+              <input type="text" id="emp-rpt-empno" oninput="window.filterEmployeeReport()" placeholder="Filter by Emp No..." class="p-2 rounded border">
+            </div>
+            <div id="emp-rpt-summary" class="bg-slate-900 p-4 rounded-lg text-xs space-y-2 text-slate-300">
+              <p><span class="font-bold text-white">Report Summary:</span> Select criteria above to inspect employee details and benefit summaries.</p>
+              <div id="emp-rpt-benefit-details" class="text-emerald-300"></div>
+            </div>
+            <div class="flex justify-end gap-2">
+              <button onclick="window.downloadEmployeeReportPDF()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded flex items-center gap-1">
+                <i class="fa-solid fa-file-pdf"></i> View / Download PDF
+              </button>
+              <button onclick="window.downloadEmployeeReportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded flex items-center gap-1">
+                <i class="fa-solid fa-file-excel"></i> Export Report Excel
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+              <div class="flex items-center gap-3">
+                <h3 class="text-lg font-bold text-slate-800">සියලුම සේවක ලැයිස්තුව</h3>
+                <button onclick="window.exportEmployeeTableExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1">
+                  <i class="fa-solid fa-file-excel"></i> Download Excel
+                </button>
+              </div>
+              <div class="flex gap-2 w-full md:w-auto">
+                <input type="text" id="emp-search" oninput="window.filterEmployees()" placeholder="Search EMP No, Name, NIC..." class="border rounded-lg p-2 text-sm w-full md:w-64">
+                <select id="emp-filter-status" onchange="window.filterEmployees()" class="border rounded-lg p-2 text-sm">
+                  <option value="ALL">All Status</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="RESIGNED">RESIGNED</option>
+                  <option value="TERMINATED">TERMINATED</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table id="employee-table" class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase">
+                    <th class="py-3 px-2">EMP No</th>
+                    <th class="py-3 px-2">Full Name</th>
+                    <th class="py-3 px-2">Company</th>
+                    <th class="py-3 px-2">Branch / Dept</th>
+                    <th class="py-3 px-2">Designation</th>
+                    <th class="py-3 px-2">Status</th>
+                    <th class="py-3 px-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="employee-table-body" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="7" class="text-center py-4 text-slate-400">දත්ත ලෝඩ් වෙමින් පවතී...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: COMPANIES, BRANCHES & DEPARTMENTS VIEW -->
+        <section id="tab-masterdata" class="tab-content hidden space-y-6">
+          <div class="flex border-b border-slate-200 gap-4 mb-4">
+            <button onclick="switchMasterSubTab('companies')" id="subnav-companies" class="subnav-btn py-2 px-4 font-bold border-b-2 border-emerald-600 text-emerald-600">Companies</button>
+            <button onclick="switchMasterSubTab('branches')" id="subnav-branches" class="subnav-btn py-2 px-4 font-bold border-b-2 border-transparent text-slate-500">Branches</button>
+            <button onclick="switchMasterSubTab('departments')" id="subnav-departments" class="subnav-btn py-2 px-4 font-bold border-b-2 border-transparent text-slate-500">Departments</button>
+          </div>
+
+          <!-- SUBTAB: COMPANIES -->
+          <div id="subtab-companies" class="subtab-content bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-bold text-slate-800">සමාගම් (Companies)</h3>
+              <button onclick="window.openCompanyModalForAdd()" class="action-btn bg-emerald-600 text-white text-xs px-3 py-2 rounded-lg">+ Add Company</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b text-xs text-slate-400 uppercase">
+                    <th class="py-2">Company Name</th>
+                    <th class="py-2">Address</th>
+                    <th class="py-2">Remarks</th>
+                    <th class="py-2">Status</th>
+                    <th class="py-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="company-list" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="5" class="py-2 text-slate-400">Loading companies...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUBTAB: BRANCHES -->
+          <div id="subtab-branches" class="subtab-content hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-bold text-slate-800">ශාඛා (Branches)</h3>
+              <button onclick="window.openBranchModalForAdd()" class="action-btn bg-emerald-600 text-white text-xs px-3 py-2 rounded-lg">+ Add Branch</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b text-xs text-slate-400 uppercase">
+                    <th class="py-2">Branch Name</th>
+                    <th class="py-2">Belongs to Company</th>
+                    <th class="py-2">Location</th>
+                    <th class="py-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="branch-list" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="4" class="py-2 text-slate-400">Loading branches...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUBTAB: DEPARTMENTS -->
+          <div id="subtab-departments" class="subtab-content hidden bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-bold text-slate-800">දෙපාර්තමේන්තු (Departments)</h3>
+              <button onclick="window.openDeptModalForAdd()" class="action-btn bg-emerald-600 text-white text-xs px-3 py-2 rounded-lg">+ Add Dept</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b text-xs text-slate-400 uppercase">
+                    <th class="py-2">Department Name</th>
+                    <th class="py-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dept-list" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="2" class="py-2 text-slate-400">Loading departments...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: TRANSACTIONS VIEW -->
+        <section id="tab-transactions" class="tab-content hidden space-y-6">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
+              <h3 class="text-lg font-bold text-slate-800">සියලුම ගිණුම් ගනුදෙනු වාර්තා</h3>
+              <div class="flex gap-2">
+                <button onclick="window.exportTransactionsExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1">
+                  <i class="fa-solid fa-file-excel"></i> Export Excel (Raw Data)
+                </button>
+                <button onclick="window.openTxnModalForAdd()" class="action-btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded-lg">
+                  + New Transaction
+                </button>
+              </div>
+            </div>
+
+            <!-- Transaction Search Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm bg-slate-50 p-4 rounded-lg">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Search Txn No</label>
+                <input type="text" id="txn-search-no" placeholder="WWS-..." class="w-full border rounded p-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">EMP No / Name</label>
+                <input type="text" id="txn-search-emp" placeholder="Emp No or Name" class="w-full border rounded p-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">From Date</label>
+                <input type="date" id="txn-search-from" class="w-full border rounded p-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">To Date</label>
+                <input type="date" id="txn-search-to" class="w-full border rounded p-2 text-xs">
+              </div>
+              <div class="flex items-end gap-2">
+                <button onclick="window.filterTransactions()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs p-2.5 rounded font-semibold flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+                <button onclick="window.resetTxnFilter()" class="bg-slate-200 text-slate-700 text-xs p-2.5 rounded">Reset</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table id="txn-table" class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase">
+                    <th class="py-3 px-2">Transaction No</th>
+                    <th class="py-3 px-2">Date</th>
+                    <th class="py-3 px-2">Type</th>
+                    <th class="py-3 px-2">Category</th>
+                    <th class="py-3 px-2">EMP No / Name</th>
+                    <th class="py-3 px-2">Payment Mode</th>
+                    <th class="py-3 px-2 text-right">Amount (LKR)</th>
+                    <th class="py-3 px-2 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="transaction-table-body" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="8" class="text-center py-4 text-slate-400">දත්ත ලෝඩ් වෙමින් පවතී...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: REPORTS & ANALYTICS VIEW -->
+        <section id="tab-reports" class="tab-content hidden space-y-6">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
+            <div class="flex justify-between items-center border-b pb-4 no-print">
+              <h3 class="text-lg font-bold text-slate-800">Advanced Reports Center</h3>
+              <div class="flex gap-2">
+                <button onclick="window.exportActiveReportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2">
+                  <i class="fa-solid fa-file-excel"></i> Export Excel
+                </button>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2">
+                  <i class="fa-solid fa-print"></i> Print / Download PDF
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
+              <button onclick="switchReportType('inc_exp')" id="rpt-btn-inc_exp" class="p-3 border rounded-lg font-bold text-sm bg-emerald-50 border-emerald-500 text-emerald-700 text-left">
+                1. Income & Expenditure Statement
+              </button>
+              <button onclick="switchReportType('subscription')" id="rpt-btn-subscription" class="p-3 border rounded-lg font-bold text-sm bg-slate-50 text-slate-700 text-left">
+                2. Monthly Subscription Collection
+              </button>
+              <button onclick="switchReportType('benefit_history')" id="rpt-btn-benefit_history" class="p-3 border rounded-lg font-bold text-sm bg-slate-50 text-slate-700 text-left">
+                3. Employee Benefit History
+              </button>
+            </div>
+
+            <div id="report-filters-container" class="bg-slate-50 p-4 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-3 text-xs no-print"></div>
+
+            <div id="report-print-area" class="space-y-4 pt-4">
+              <div class="text-center border-b pb-4">
+                <h2 class="text-2xl font-bold">වික්‍රමරත්න සමූහ ව්‍යාපාරය - සේවක සුභසාධක සමිතිය</h2>
+                <p id="report-heading-title" class="text-sm font-semibold text-emerald-700">Financial & Operations Summary Report</p>
+                <p id="report-period-subtitle" class="text-xs text-slate-500"></p>
+              </div>
+
+              <div id="report-body-render"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 6: USER MANAGEMENT VIEW (ADMIN ONLY) -->
+        <section id="tab-users" class="tab-content admin-only hidden space-y-6">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-4">
+              <div>
+                <h3 class="text-lg font-bold text-slate-800">පරිශීලක කළමනාකරණය (User Management)</h3>
+                <p class="text-xs text-slate-500">පද්ධතියේ පරිශීලකයින් එකතු කිරීම, සංස්කරණය කිරීම සහ ලිහිල්/අවසර පාලනය</p>
+              </div>
+              <button onclick="window.openUserModalForAdd()" class="action-btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1">
+                <i class="fa-solid fa-user-plus"></i> + Add New User
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase">
+                    <th class="py-3 px-2">Username</th>
+                    <th class="py-3 px-2">Role</th>
+                    <th class="py-3 px-2">Status</th>
+                    <th class="py-3 px-2">Created Date</th>
+                    <th class="py-3 px-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="user-table-body" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="5" class="text-center py-4 text-slate-400">Loading Users...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Footer -->
+      <footer class="mt-8 pt-4 border-t border-slate-200 text-center text-xs text-slate-500 no-print">
+        Developed by: <span class="font-semibold text-slate-700">Chandana Edirisinghe</span>
+      </footer>
+    </main>
+  </div>
+
+  <!-- MODAL 1: ADD / EDIT EMPLOYEE -->
+  <div id="employee-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="employee-modal-title" class="text-lg font-bold text-slate-800">නව සේවකයෙකු ලියාපදිංචි කිරීම</h3>
+        <button onclick="closeModal('employee-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="employee-form" class="space-y-3 text-sm">
+        <input type="hidden" id="isEditMode" value="false">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">EMP No *</label>
+            <input type="text" id="empNo" required placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+            <select id="empStatus" class="w-full border rounded-lg p-2 text-sm">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="RESIGNED">RESIGNED</option>
+              <option value="TERMINATED">TERMINATED</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
+          <input type="text" id="empName" required placeholder="A.B. Perera" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">NIC *</label>
+            <input type="text" id="empNic" required placeholder="882345678V" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Company</label>
+            <select id="empCompany" class="w-full border rounded-lg p-2 text-sm"></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Branch</label>
+            <select id="empBranch" class="w-full border rounded-lg p-2 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Department</label>
+            <select id="empDepartment" class="w-full border rounded-lg p-2 text-sm"></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
+            <input type="text" id="empDesignation" placeholder="Executive" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Register</label>
+            <input type="date" id="empDateReg" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Service Ended Date (If Resigned/Terminated)</label>
+          <input type="date" id="empServiceEndedDate" class="w-full border rounded-lg p-2 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('employee-modal')" class="px-4 py-2 border rounded-lg text-slate-600">Cancel</button>
+          <button type="submit" id="employee-submit-btn" class="action-btn px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Save Employee</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD / EDIT TRANSACTION -->
+  <div id="transaction-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="txn-modal-title" class="text-lg font-bold text-slate-800">නව Transaction එකක් සටහන් කිරීම</h3>
+        <button onclick="closeModal('transaction-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="transaction-form" class="space-y-3 text-sm">
+        <input type="hidden" id="txnDocId" value="">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Transaction No</label>
+            <input type="text" id="txnNoDisplay" readonly class="w-full bg-slate-100 border rounded-lg p-2 text-sm font-mono text-slate-600 cursor-not-allowed">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Transaction Type</label>
+            <select id="txnType" class="w-full border rounded-lg p-2 text-sm">
+              <option value="INCOME">INCOME (ආදායම්)</option>
+              <option value="EXPENSE">EXPENSE (වියදම්/ප්‍රතිලාභ)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+            <select id="txnCategory" class="w-full border rounded-lg p-2 text-sm">
+              <option value="MONTHLY_FEE">Monthly Membership Fee</option>
+              <option value="REGISTRATION_FEE">Registration Fee</option>
+              <option value="DONATION">Donation / Aid</option>
+              <option value="BENEFIT_PAYMENT">Benefit Payment</option>
+              <option value="OTHER_EXPENSE">Other Expense</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (LKR) *</label>
+            <input type="number" id="txnAmount" step="0.01" required placeholder="500.00" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Payment Mode</label>
+            <select id="txnPaymentMode" class="w-full border rounded-lg p-2 text-sm">
+              <option value="CASH">CASH</option>
+              <option value="BANK_TRANSFER">BANK TRANSFER</option>
+              <option value="CHEQUE">CHEQUE</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <input type="date" id="txnDate" required class="w-full border rounded-lg p-2 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Related EMP No (Optional)</label>
+          <input type="text" id="txnEmpNo" placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Description / සටහන</label>
+          <input type="text" id="txnDesc" placeholder="Monthly fee for Oct 2026" class="w-full border rounded-lg p-2 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('transaction-modal')" class="px-4 py-2 border rounded-lg text-slate-600">Cancel</button>
+          <button type="submit" id="txn-submit-btn" class="action-btn px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: COMPANY MODAL -->
+  <div id="company-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+      <h3 id="company-modal-title" class="text-lg font-bold text-slate-800">Company එකක් එකතු කිරීම</h3>
+      <form id="company-form" class="space-y-3 text-sm">
+        <input type="hidden" id="companyId" value="">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Company Name *</label>
+          <input type="text" id="companyName" required placeholder="Wickramaratne Holdings" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Address</label>
+          <input type="text" id="companyAddress" placeholder="Colombo 03" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Remarks</label>
+          <input type="text" id="companyRemarks" placeholder="Main Head Office Group" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+          <select id="companyStatus" class="w-full border rounded-lg p-2">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('company-modal')" class="px-3 py-1.5 border rounded-lg">Cancel</button>
+          <button type="submit" class="action-btn px-3 py-1.5 bg-emerald-600 text-white rounded-lg">Save Company</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: BRANCH MODAL -->
+  <div id="branch-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+      <h3 id="branch-modal-title" class="text-lg font-bold text-slate-800">ශාඛාවක් ඇතුළත් කිරීම</h3>
+      <form id="branch-form" class="space-y-3 text-sm">
+        <input type="hidden" id="branchId" value="">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Belongs to Company *</label>
+          <select id="branchCompany" required class="w-full border rounded-lg p-2"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Branch Name *</label>
+          <input type="text" id="branchName" required placeholder="Head Office - Colombo" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Location</label>
+          <input type="text" id="branchLocation" placeholder="Colombo 03" class="w-full border rounded-lg p-2">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('branch-modal')" class="px-3 py-1.5 border rounded-lg">Cancel</button>
+          <button type="submit" class="action-btn px-3 py-1.5 bg-emerald-600 text-white rounded-lg">Save Branch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: DEPT MODAL -->
+  <div id="dept-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+      <h3 id="dept-modal-title" class="text-lg font-bold text-slate-800">දෙපාර්තමේන්තුවක් එකතු කිරීම</h3>
+      <form id="dept-form" class="space-y-3 text-sm">
+        <input type="hidden" id="deptId" value="">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Department Name *</label>
+          <input type="text" id="deptName" required placeholder="Finance & Accounts" class="w-full border rounded-lg p-2">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('dept-modal')" class="px-3 py-1.5 border rounded-lg">Cancel</button>
+          <button type="submit" class="action-btn px-3 py-1.5 bg-emerald-600 text-white rounded-lg">Save Dept</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 6: USER MANAGEMENT MODAL -->
+  <div id="user-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+      <h3 id="user-modal-title" class="text-lg font-bold text-slate-800">නව පරිශීලකයෙකු එක් කිරීම</h3>
+      <form id="user-form" class="space-y-3 text-sm">
+        <input type="hidden" id="userId" value="">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Username *</label>
+          <input type="text" id="userUsername" required placeholder="wws02" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Password *</label>
+          <input type="password" id="userPassword" required placeholder="••••••••" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Role *</label>
+          <select id="userRole" class="w-full border rounded-lg p-2">
+            <option value="Admin">Admin</option>
+            <option value="Operator">Operator</option>
+            <option value="View Only">View Only</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+          <select id="userStatus" class="w-full border rounded-lg p-2">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('user-modal')" class="px-3 py-1.5 border rounded-lg">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 7: PAYMENT VOUCHER MODAL -->
+  <div id="voucher-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 no-print">
+        <h3 class="text-lg font-bold text-slate-800">Payment Voucher Preview</h3>
+        <div class="flex gap-2">
+          <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1">
+            <i class="fa-solid fa-print"></i> Print / PDF
+          </button>
+          <button onclick="closeModal('voucher-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <div id="printable-voucher" class="p-6 border border-slate-300 rounded-lg bg-white space-y-6">
+        <div class="text-center border-b pb-4">
+          <h2 class="text-2xl font-bold text-slate-900">වික්‍රමරත්න සමූහ ව්‍යාපාරය</h2>
+          <p class="text-sm font-semibold text-emerald-700">සේවක සුභසාධක සමිතිය</p>
+          <p class="text-xs text-slate-500">Welfare Society Payment Voucher</p>
+        </div>
+
+        <div class="flex justify-between items-center text-sm">
+          <div>
+            <p><span class="font-bold text-slate-600">Voucher No:</span> <span id="v-no" class="font-mono text-slate-800"></span></p>
+            <p><span class="font-bold text-slate-600">Type:</span> <span id="v-type" class="font-bold"></span></p>
+          </div>
+          <div class="text-right">
+            <p><span class="font-bold text-slate-600">Date:</span> <span id="v-date"></span></p>
+            <p><span class="font-bold text-slate-600">Payment Mode:</span> <span id="v-mode"></span></p>
+          </div>
+        </div>
+
+        <div class="border rounded-lg p-4 bg-slate-50 space-y-2 text-sm">
+          <div class="grid grid-cols-3 gap-2">
+            <span class="font-semibold text-slate-600">EMP No / Member:</span>
+            <span id="v-emp" class="col-span-2 font-medium text-slate-800"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <span class="font-semibold text-slate-600">Category:</span>
+            <span id="v-category" class="col-span-2 font-medium text-slate-800"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <span class="font-semibold text-slate-600">Description:</span>
+            <span id="v-desc" class="col-span-2 text-slate-700"></span>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center border border-slate-800 rounded-lg p-4 bg-slate-100">
+          <span class="text-base font-bold text-slate-800">Total Amount (LKR):</span>
+          <span id="v-amount" class="text-2xl font-bold text-slate-900"></span>
+        </div>
+
+        <div class="pt-12 grid grid-cols-3 gap-4 text-center text-xs text-slate-600">
+          <div class="border-t border-slate-400 pt-1">Prepared By</div>
+          <div class="border-t border-slate-400 pt-1">Approved By</div>
+          <div class="border-t border-slate-400 pt-1">Payee/Receiver Signature</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE SDKs & Application Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, onSnapshot, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBmVTh1xUTkBQFsRf2mAj67QhLqwOE8PkQ",
+      authDomain: "messagingapp-cf6bf.firebaseapp.com",
+      databaseURL: "https://messagingapp-cf6bf-default-rtdb.firebaseio.com",
+      projectId: "messagingapp-cf6bf",
+      storageBucket: "messagingapp-cf6bf.firebasestorage.app",
+      messagingSenderId: "244977676306",
+      appId: "1:244977676306:web:8f80dff5ca18cec543a8cb",
+      measurementId: "G-GQCGK07MC3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.companiesMap = {};
+    window.branchesMap = {};
+    window.departmentsMap = {};
+    window.employeesMap = {};
+    window.transactionsMap = {};
+    window.usersMap = {};
+
+    window.currentUser = null;
+    window.activeReportType = 'inc_exp';
+
+    document.getElementById('empDateReg').value = new Date().toISOString().split('T')[0];
+    document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+
+    // Helper to generate Next Transaction Number "WWS-0000000001"
+    window.generateNextTxnNo = function() {
+      let maxNum = 0;
+      Object.values(window.transactionsMap).forEach(tx => {
+        if(tx.txnNo && tx.txnNo.startsWith("WWS-")) {
+          const numPart = parseInt(tx.txnNo.replace("WWS-", ""), 10);
+          if(!isNaN(numPart) && numPart > maxNum) {
+            maxNum = numPart;
+          }
+        }
+      });
+      const nextNum = maxNum + 1;
+      return "WWS-" + String(nextNum).padStart(10, '0');
+    };
+
+    // User Schema Check & Auto-Init Default Admin
+    async function initUsersSchema() {
+      try {
+        const usersCol = collection(db, "users");
+        const snapshot = await getDocs(usersCol);
+
+        if (snapshot.empty) {
+          const defaultAdmin = {
+            username: "wws01",
+            password: "wws01@1234",
+            role: "Admin",
+            status: "ACTIVE",
+            createdAt: Timestamp.now()
+          };
+          await setDoc(doc(db, "users", "wws01"), defaultAdmin);
+          console.log("Default Admin User Initialized successfully!");
+        }
+      } catch (e) {
+        console.error("Error checking/initializing users schema: ", e);
+      }
+    }
+
+    initUsersSchema();
+
+    // Login Handle
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+
+      errorDiv.classList.add('hidden');
+
+      try {
+        const usersSnap = await getDocs(collection(db, "users"));
+        let matchedUser = null;
+
+        usersSnap.forEach(docSnap => {
+          const usr = docSnap.data();
+          if (usr.username === u && usr.password === p) {
+            matchedUser = usr;
+          }
+        });
+
+        if (matchedUser) {
+          if (matchedUser.status !== 'ACTIVE') {
+            errorDiv.innerText = "ඔබගේ පරිශීලක ගිණුම සක්‍රිය නොවේ (Inactive Account).";
+            errorDiv.classList.remove('hidden');
+            return;
+          }
+
+          window.currentUser = matchedUser;
+          sessionStorage.setItem('loggedInUser', JSON.stringify(matchedUser));
+          applyUserPermissions();
+
+          document.getElementById('login-screen').classList.add('hidden');
+          document.getElementById('app-container').classList.remove('hidden');
+        } else {
+          errorDiv.innerText = "ඇතුළත් කළ Username හෝ Password වැරදියි!";
+          errorDiv.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorDiv.innerText = "ලොග් වීමේ දෝෂයක්: " + err.message;
+        errorDiv.classList.remove('hidden');
+      }
+    });
+
+    // Check logged in user on page load
+    const savedUser = sessionStorage.getItem('loggedInUser');
+    if (savedUser) {
+      window.currentUser = JSON.parse(savedUser);
+      applyUserPermissions();
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-container').classList.remove('hidden');
+    }
+
+    window.logoutUser = function() {
+      sessionStorage.removeItem('loggedInUser');
+      window.currentUser = null;
+      document.getElementById('app-container').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    };
+
+    // Role-based Access & UI Adjustments
+    function applyUserPermissions() {
+      if (!window.currentUser) return;
+
+      const role = window.currentUser.role;
+      document.getElementById('sidebar-username').innerText = window.currentUser.username;
+      document.getElementById('sidebar-userrole').innerText = role;
+
+      const adminElements = document.querySelectorAll('.admin-only');
+      const actionBtns = document.querySelectorAll('.action-btn');
+
+      if (role === 'Admin') {
+        adminElements.forEach(el => el.classList.remove('hidden'));
+        actionBtns.forEach(btn => {
+          btn.style.display = '';
+          btn.disabled = false;
+        });
+      } else if (role === 'Operator') {
+        adminElements.forEach(el => el.classList.add('hidden'));
+        actionBtns.forEach(btn => {
+          btn.style.display = '';
+          btn.disabled = false;
+        });
+      } else if (role === 'View Only') {
+        adminElements.forEach(el => el.classList.add('hidden'));
+        actionBtns.forEach(btn => {
+          btn.style.display = 'none';
+          btn.disabled = true;
+        });
+      }
+    }
+
+    // Users Realtime Listener
+    onSnapshot(collection(db, "users"), (snapshot) => {
+      const uBody = document.getElementById('user-table-body');
+      if(!uBody) return;
+
+      uBody.innerHTML = '';
+      window.usersMap = {};
+
+      snapshot.forEach(docSnap => {
+        const u = { id: docSnap.id, ...docSnap.data() };
+        window.usersMap[docSnap.id] = u;
+
+        const dateStr = u.createdAt ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : '-';
+
+        uBody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-2 font-bold text-slate-800">${u.username}</td>
+            <td class="py-3 px-2 font-semibold ${u.role === 'Admin' ? 'text-purple-600' : u.role === 'Operator' ? 'text-blue-600' : 'text-amber-600'}">${u.role}</td>
+            <td class="py-3 px-2">
+              <span class="px-2 py-0.5 text-xs rounded ${u.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} font-semibold">${u.status}</span>
+            </td>
+            <td class="py-3 px-2 text-slate-500 text-xs">${dateStr}</td>
+            <td class="py-3 px-2 text-center">
+              <button onclick="window.openUserModalForEdit('${u.id}')" class="px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border">Edit</button>
+            </td>
+          </tr>
+        `;
+      });
+    });
+
+    // Realtime Master Data Listeners
+    onSnapshot(collection(db, "companies"), (snapshot) => {
+      const compTable = document.getElementById('company-list');
+      const empCompSelect = document.getElementById('empCompany');
+      const branchCompSelect = document.getElementById('branchCompany');
+      const rptCompSelect = document.getElementById('emp-rpt-company');
+
+      compTable.innerHTML = '';
+      empCompSelect.innerHTML = '<option value="">Select Company</option>';
+      branchCompSelect.innerHTML = '<option value="">Select Company</option>';
+      rptCompSelect.innerHTML = '<option value="">All Companies</option>';
+      window.companiesMap = {};
+
+      snapshot.forEach(docSnap => {
+        const c = { id: docSnap.id, ...docSnap.data() };
+        window.companiesMap[docSnap.id] = c;
+
+        compTable.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2 font-bold">${c.companyName}</td>
+            <td class="py-2 text-slate-500">${c.address || '-'}</td>
+            <td class="py-2 text-slate-500">${c.remarks || '-'}</td>
+            <td class="py-2"><span class="px-2 py-0.5 text-xs rounded ${c.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} font-semibold">${c.status || 'ACTIVE'}</span></td>
+            <td class="py-2 text-center">
+              <button onclick="window.openCompanyModalForEdit('${c.id}')" class="action-btn px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded border">Edit</button>
+            </td>
+          </tr>
+        `;
+        empCompSelect.innerHTML += `<option value="${c.id}">${c.companyName}</option>`;
+        branchCompSelect.innerHTML += `<option value="${c.id}">${c.companyName}</option>`;
+        rptCompSelect.innerHTML += `<option value="${c.id}">${c.companyName}</option>`;
+      });
+      applyUserPermissions();
+    });
+
+    onSnapshot(collection(db, "branches"), (snapshot) => {
+      const branchList = document.getElementById('branch-list');
+      const branchSelect = document.getElementById('empBranch');
+      const rptBranchSelect = document.getElementById('emp-rpt-branch');
+
+      branchList.innerHTML = '';
+      branchSelect.innerHTML = '<option value="">Select Branch</option>';
+      rptBranchSelect.innerHTML = '<option value="">All Branches</option>';
+      window.branchesMap = {};
+
+      snapshot.forEach(docSnap => {
+        const b = { id: docSnap.id, ...docSnap.data() };
+        window.branchesMap[docSnap.id] = b;
+        const compName = window.companiesMap[b.companyId] ? window.companiesMap[b.companyId].companyName : '-';
+
+        branchList.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2 font-medium">${b.branchName}</td>
+            <td class="py-2 text-slate-600">${compName}</td>
+            <td class="py-2 text-slate-400">${b.location || '-'}</td>
+            <td class="py-2 text-center">
+              <button onclick="window.openBranchModalForEdit('${b.id}')" class="action-btn px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded border">Edit</button>
+            </td>
+          </tr>
+        `;
+        branchSelect.innerHTML += `<option value="${b.id}">${b.branchName}</option>`;
+        rptBranchSelect.innerHTML += `<option value="${b.id}">${b.branchName}</option>`;
+      });
+      applyUserPermissions();
+    });
+
+    onSnapshot(collection(db, "departments"), (snapshot) => {
+      const deptList = document.getElementById('dept-list');
+      const deptSelect = document.getElementById('empDepartment');
+      const rptDeptSelect = document.getElementById('emp-rpt-dept');
+
+      deptList.innerHTML = '';
+      deptSelect.innerHTML = '<option value="">Select Department</option>';
+      rptDeptSelect.innerHTML = '<option value="">All Divisions/Depts</option>';
+      window.departmentsMap = {};
+
+      snapshot.forEach(docSnap => {
+        const d = { id: docSnap.id, ...docSnap.data() };
+        window.departmentsMap[docSnap.id] = d;
+
+        deptList.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2 font-medium">${d.deptName}</td>
+            <td class="py-2 text-center">
+              <button onclick="window.openDeptModalForEdit('${d.id}')" class="action-btn px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded border">Edit</button>
+            </td>
+          </tr>
+        `;
+        deptSelect.innerHTML += `<option value="${d.id}">${d.deptName}</option>`;
+        rptDeptSelect.innerHTML += `<option value="${d.id}">${d.deptName}</option>`;
+      });
+      applyUserPermissions();
+    });
+
+    // Employee Filter & Render
+    window.filterEmployees = function() {
+      const query = document.getElementById('emp-search').value.toLowerCase();
+      const statusFilter = document.getElementById('emp-filter-status').value;
+      const empBody = document.getElementById('employee-table-body');
+      empBody.innerHTML = '';
+
+      let list = Object.values(window.employeesMap);
+
+      if(statusFilter !== 'ALL') {
+        list = list.filter(e => e.status === statusFilter);
+      }
+
+      if(query) {
+        list = list.filter(e => 
+          (e.empNo && e.empNo.toLowerCase().includes(query)) ||
+          (e.fullName && e.fullName.toLowerCase().includes(query)) ||
+          (e.nic && e.nic.toLowerCase().includes(query))
+        );
+      }
+
+      if(list.length === 0) {
+        empBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-400">කිසිදු සේවකයෙකු හමුවූයේ නැත.</td></tr>';
+        return;
+      }
+
+      list.forEach(emp => {
+        const cName = window.companiesMap[emp.companyId] ? window.companiesMap[emp.companyId].companyName : '-';
+        const bName = window.branchesMap[emp.branchId] ? window.branchesMap[emp.branchId].branchName : '-';
+        const dName = window.departmentsMap[emp.departmentId] ? window.departmentsMap[emp.departmentId].deptName : '-';
+
+        const row = `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-2 font-bold text-emerald-600">${emp.empNo}</td>
+            <td class="py-3 px-2 font-medium">${emp.fullName}</td>
+            <td class="py-3 px-2 text-slate-600">${cName}</td>
+            <td class="py-3 px-2 text-slate-500">${bName} / ${dName}</td>
+            <td class="py-3 px-2 text-slate-500">${emp.designation || '-'}</td>
+            <td class="py-3 px-2">
+              <span class="px-2 py-1 text-xs rounded-full ${emp.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} font-semibold">
+                ${emp.status}
+              </span>
+            </td>
+            <td class="py-3 px-2 text-center">
+              <button onclick="window.editEmployee('${emp.empNo}')" class="action-btn px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+            </td>
+          </tr>
+        `;
+        empBody.innerHTML += row;
+      });
+      applyUserPermissions();
+    };
+
+    onSnapshot(collection(db, "employees"), (snapshot) => {
+      window.employeesMap = {};
+      let activeCount = 0;
+
+      snapshot.forEach((docSnap) => {
+        const emp = docSnap.data();
+        window.employeesMap[emp.empNo] = emp;
+        if(emp.status === 'ACTIVE') activeCount++;
+      });
+
+      document.getElementById('stat-active-emp').innerText = activeCount;
+      window.filterEmployees();
+    });
+
+    // Transactions Realtime & Filter
+    window.filterTransactions = function() {
+      const txNoQuery = document.getElementById('txn-search-no').value.toLowerCase().trim();
+      const empQuery = document.getElementById('txn-search-emp').value.toLowerCase().trim();
+      const fromDate = document.getElementById('txn-search-from').value;
+      const toDate = document.getElementById('txn-search-to').value;
+
+      const txBody = document.getElementById('transaction-table-body');
+      txBody.innerHTML = '';
+
+      let list = Object.values(window.transactionsMap);
+
+      if(txNoQuery) {
+        list = list.filter(tx => (tx.txnNo && tx.txnNo.toLowerCase().includes(txNoQuery)) || tx.id.toLowerCase().includes(txNoQuery));
+      }
+
+      if(empQuery) {
+        list = list.filter(tx => {
+          const emp = tx.empNo ? window.employeesMap[tx.empNo] : null;
+          const name = emp ? emp.fullName.toLowerCase() : '';
+          return (tx.empNo && tx.empNo.toLowerCase().includes(empQuery)) || name.includes(empQuery);
+        });
+      }
+
+      if(fromDate) list = list.filter(tx => tx.date >= fromDate);
+      if(toDate) list = list.filter(tx => tx.date <= toDate);
+
+      if(list.length === 0) {
+        txBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-slate-400">ගනුදෙනු කිසිවක් හමුවූයේ නැත.</td></tr>';
+        return;
+      }
+
+      list.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+      list.forEach(tx => {
+        const isIncome = tx.type === 'INCOME';
+        const empName = tx.empNo && window.employeesMap[tx.empNo] ? window.employeesMap[tx.empNo].fullName : '';
+        txBody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-2 font-mono font-bold text-slate-700">${tx.txnNo || tx.id}</td>
+            <td class="py-3 px-2 text-slate-500">${tx.date}</td>
+            <td class="py-3 px-2 font-semibold ${isIncome ? 'text-emerald-600' : 'text-red-500'}">${tx.type}</td>
+            <td class="py-3 px-2 text-slate-600">${tx.category}</td>
+            <td class="py-3 px-2 font-mono text-slate-700">${tx.empNo ? `${tx.empNo} (${empName})` : '-'}</td>
+            <td class="py-3 px-2 text-slate-500">${tx.paymentMode || 'CASH'}</td>
+            <td class="py-3 px-2 text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-red-500'}">
+              ${isIncome ? '+' : '-'} ${parseFloat(tx.amount).toFixed(2)}
+            </td>
+            <td class="py-3 px-2 text-center flex justify-center gap-1">
+              <button onclick="window.editTransaction('${tx.id}')" class="action-btn px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="window.viewVoucher('${tx.id}')" class="px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 rounded border border-blue-200">
+                <i class="fa-solid fa-file-invoice"></i> Voucher
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      applyUserPermissions();
+    };
+
+    window.resetTxnFilter = function() {
+      document.getElementById('txn-search-no').value = '';
+      document.getElementById('txn-search-emp').value = '';
+      document.getElementById('txn-search-from').value = '';
+      document.getElementById('txn-search-to').value = '';
+      window.filterTransactions();
+    };
+
+    onSnapshot(collection(db, "transactions"), (snapshot) => {
+      const dashTxBody = document.getElementById('dashboard-tx-table');
+      dashTxBody.innerHTML = '';
+      window.transactionsMap = {};
+
+      let currentBalance = 0;
+      let monthlyIncome = 0;
+      let monthlyExpense = 0;
+
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const txList = [];
+
+      snapshot.forEach(docSnap => {
+        const tx = { id: docSnap.id, ...docSnap.data() };
+        window.transactionsMap[docSnap.id] = tx;
+        txList.push(tx);
+
+        const amt = parseFloat(tx.amount || 0);
+
+        if (tx.type === 'INCOME') {
+          currentBalance += amt;
+          if (tx.date && tx.date.startsWith(currentMonth)) monthlyIncome += amt;
+        } else if (tx.type === 'EXPENSE') {
+          currentBalance -= amt;
+          if (tx.date && tx.date.startsWith(currentMonth)) monthlyExpense += amt;
+        }
+      });
+
+      document.getElementById('stat-balance').innerText = `LKR ${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+      document.getElementById('stat-monthly-income').innerText = `LKR ${monthlyIncome.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+      document.getElementById('stat-monthly-expense').innerText = `LKR ${monthlyExpense.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+      setDoc(doc(db, "accounts", "MAIN_ACC"), { accountName: "Welfare Main Account", currentBalance, updatedAt: Timestamp.now() }, { merge: true });
+
+      txList.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+      txList.slice(0, 5).forEach(tx => {
+        const isIncome = tx.type === 'INCOME';
+        dashTxBody.innerHTML += `
+          <tr>
+            <td class="py-3 px-2 font-mono text-xs font-bold text-slate-600">${tx.txnNo || tx.id}</td>
+            <td class="py-3 px-2 text-slate-500">${tx.date}</td>
+            <td class="py-3 px-2 font-medium text-slate-700">${tx.description || tx.category}</td>
+            <td class="py-3 px-2 text-slate-500">${tx.category}</td>
+            <td class="py-3 px-2 text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-red-500'}">
+              ${isIncome ? '+' : '-'} ${parseFloat(tx.amount).toFixed(2)}
+            </td>
+          </tr>
+        `;
+      });
+
+      window.filterTransactions();
+      window.renderReports();
+    });
+
+    // EXCEL EXPORTS
+    window.exportEmployeeTableExcel = function() {
+      const query = document.getElementById('emp-search').value.toLowerCase();
+      const statusFilter = document.getElementById('emp-filter-status').value;
+      let list = Object.values(window.employeesMap);
+
+      if(statusFilter !== 'ALL') list = list.filter(e => e.status === statusFilter);
+      if(query) {
+        list = list.filter(e => 
+          (e.empNo && e.empNo.toLowerCase().includes(query)) ||
+          (e.fullName && e.fullName.toLowerCase().includes(query)) ||
+          (e.nic && e.nic.toLowerCase().includes(query))
+        );
+      }
+
+      const excelData = list.map(e => ({
+        "EMP No": e.empNo,
+        "Full Name": e.fullName,
+        "NIC": e.nic || '',
+        "Company": window.companiesMap[e.companyId] ? window.companiesMap[e.companyId].companyName : '',
+        "Branch": window.branchesMap[e.branchId] ? window.branchesMap[e.branchId].branchName : '',
+        "Department": window.departmentsMap[e.departmentId] ? window.departmentsMap[e.departmentId].deptName : '',
+        "Designation": e.designation || '',
+        "Status": e.status,
+        "Date of Register": e.dateOfRegister || '',
+        "Service Ended Date": e.serviceEndedDate || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Employees");
+      XLSX.writeFile(wb, "Employees_List.xlsx");
+    };
+
+    window.exportTransactionsExcel = function() {
+      const txNoQuery = document.getElementById('txn-search-no').value.toLowerCase().trim();
+      const empQuery = document.getElementById('txn-search-emp').value.toLowerCase().trim();
+      const fromDate = document.getElementById('txn-search-from').value;
+      const toDate = document.getElementById('txn-search-to').value;
+
+      let list = Object.values(window.transactionsMap);
+
+      if(txNoQuery) list = list.filter(tx => (tx.txnNo && tx.txnNo.toLowerCase().includes(txNoQuery)) || tx.id.toLowerCase().includes(txNoQuery));
+      if(empQuery) {
+        list = list.filter(tx => {
+          const emp = tx.empNo ? window.employeesMap[tx.empNo] : null;
+          const name = emp ? emp.fullName.toLowerCase() : '';
+          return (tx.empNo && tx.empNo.toLowerCase().includes(empQuery)) || name.includes(empQuery);
+        });
+      }
+      if(fromDate) list = list.filter(tx => tx.date >= fromDate);
+      if(toDate) list = list.filter(tx => tx.date <= toDate);
+
+      const excelData = list.map(tx => ({
+        "Transaction No": tx.txnNo || tx.id,
+        "Date": tx.date,
+        "Type": tx.type,
+        "Category": tx.category,
+        "EMP No": tx.empNo || '',
+        "EMP Name": tx.empNo && window.employeesMap[tx.empNo] ? window.employeesMap[tx.empNo].fullName : '',
+        "Payment Mode": tx.paymentMode || 'CASH',
+        "Amount (LKR)": tx.amount,
+        "Description": tx.description || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Transactions");
+      XLSX.writeFile(wb, "Transactions_Raw_Data.xlsx");
+    };
+
+    window.filterEmployeeReport = function() {
+      const compId = document.getElementById('emp-rpt-company').value;
+      const branchId = document.getElementById('emp-rpt-branch').value;
+      const deptId = document.getElementById('emp-rpt-dept').value;
+      const empNo = document.getElementById('emp-rpt-empno').value.trim();
+
+      const summaryDiv = document.getElementById('emp-rpt-benefit-details');
+      let filteredEmps = Object.values(window.employeesMap);
+
+      if(compId) filteredEmps = filteredEmps.filter(e => e.companyId === compId);
+      if(branchId) filteredEmps = filteredEmps.filter(e => e.branchId === branchId);
+      if(deptId) filteredEmps = filteredEmps.filter(e => e.departmentId === deptId);
+      if(empNo) filteredEmps = filteredEmps.filter(e => e.empNo.toLowerCase().includes(empNo.toLowerCase()));
+
+      let totalBenefitsClaimed = 0;
+      let totalTxnCount = 0;
+
+      const empNos = filteredEmps.map(e => e.empNo);
+      Object.values(window.transactionsMap).forEach(tx => {
+        if(tx.type === 'EXPENSE' && tx.category === 'BENEFIT_PAYMENT' && empNos.includes(tx.empNo)) {
+          totalBenefitsClaimed += parseFloat(tx.amount || 0);
+          totalTxnCount++;
+        }
+      });
+
+      summaryDiv.innerHTML = `
+        Matched Employees: <span class="font-bold text-white">${filteredEmps.length}</span> | 
+        Total Benefits Distributed: <span class="font-bold text-emerald-400">LKR ${totalBenefitsClaimed.toFixed(2)}</span> (${totalTxnCount} claims)
+      `;
+    };
+
+    window.downloadEmployeeReportPDF = function() { window.print(); };
+    window.downloadEmployeeReportExcel = function() { window.exportEmployeeTableExcel(); };
+
+    // Company Modal Functions
+    window.openCompanyModalForAdd = function() {
+      document.getElementById('company-form').reset();
+      document.getElementById('companyId').value = "";
+      document.getElementById('company-modal-title').innerText = "Company එකක් එකතු කිරීම";
+      openModal('company-modal');
+    };
+
+    window.openCompanyModalForEdit = function(id) {
+      const c = window.companiesMap[id];
+      if(!c) return;
+      document.getElementById('companyId').value = id;
+      document.getElementById('companyName').value = c.companyName || '';
+      document.getElementById('companyAddress').value = c.address || '';
+      document.getElementById('companyRemarks').value = c.remarks || '';
+      document.getElementById('companyStatus').value = c.status || 'ACTIVE';
+      document.getElementById('company-modal-title').innerText = "Company එක සංස්කරණය";
+      openModal('company-modal');
+    };
+
+    document.getElementById('company-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('companyId').value;
+      const data = {
+        companyName: document.getElementById('companyName').value,
+        address: document.getElementById('companyAddress').value,
+        remarks: document.getElementById('companyRemarks').value,
+        status: document.getElementById('companyStatus').value,
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if(id) {
+          await updateDoc(doc(db, "companies", id), data);
+        } else {
+          data.createdAt = Timestamp.now();
+          await addDoc(collection(db, "companies"), data);
+        }
+        closeModal('company-modal');
+      } catch(err) { alert(err.message); }
+    });
+
+    // Branch Modal Functions
+    window.openBranchModalForAdd = function() {
+      document.getElementById('branch-form').reset();
+      document.getElementById('branchId').value = "";
+      document.getElementById('branch-modal-title').innerText = "ශාඛාවක් ඇතුළත් කිරීම";
+      openModal('branch-modal');
+    };
+
+    window.openBranchModalForEdit = function(id) {
+      const b = window.branchesMap[id];
+      if(!b) return;
+      document.getElementById('branchId').value = id;
+      document.getElementById('branchCompany').value = b.companyId || '';
+      document.getElementById('branchName').value = b.branchName || '';
+      document.getElementById('branchLocation').value = b.location || '';
+      document.getElementById('branch-modal-title').innerText = "ශාඛාව සංස්කරණය";
+      openModal('branch-modal');
+    };
+
+    document.getElementById('branch-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('branchId').value;
+      const data = {
+        companyId: document.getElementById('branchCompany').value,
+        branchName: document.getElementById('branchName').value,
+        location: document.getElementById('branchLocation').value,
+        status: 'ACTIVE',
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if(id) {
+          await updateDoc(doc(db, "branches", id), data);
+        } else {
+          data.createdAt = Timestamp.now();
+          await addDoc(collection(db, "branches"), data);
+        }
+        closeModal('branch-modal');
+      } catch(err) { alert(err.message); }
+    });
+
+    // Dept Modal Functions
+    window.openDeptModalForAdd = function() {
+      document.getElementById('dept-form').reset();
+      document.getElementById('deptId').value = "";
+      document.getElementById('dept-modal-title').innerText = "දෙපාර්තමේන්තුවක් එකතු කිරීම";
+      openModal('dept-modal');
+    };
+
+    window.openDeptModalForEdit = function(id) {
+      const d = window.departmentsMap[id];
+      if(!d) return;
+      document.getElementById('deptId').value = id;
+      document.getElementById('deptName').value = d.deptName || '';
+      document.getElementById('dept-modal-title').innerText = "දෙපාර්තමේන්තුව සංස්කරණය";
+      openModal('dept-modal');
+    };
+
+    document.getElementById('dept-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('deptId').value;
+      const data = {
+        deptName: document.getElementById('deptName').value,
+        status: 'ACTIVE',
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if(id) {
+          await updateDoc(doc(db, "departments", id), data);
+        } else {
+          data.createdAt = Timestamp.now();
+          await addDoc(collection(db, "departments"), data);
+        }
+        closeModal('dept-modal');
+      } catch(err) { alert(err.message); }
+    });
+
+    // User Management Modal Functions
+    window.openUserModalForAdd = function() {
+      document.getElementById('user-form').reset();
+      document.getElementById('userId').value = "";
+      document.getElementById('userUsername').readOnly = false;
+      document.getElementById('user-modal-title').innerText = "නව පරිශීලකයෙකු එක් කිරීම";
+      openModal('user-modal');
+    };
+
+    window.openUserModalForEdit = function(id) {
+      const u = window.usersMap[id];
+      if(!u) return;
+
+      document.getElementById('userId').value = id;
+      document.getElementById('userUsername').value = u.username || '';
+      document.getElementById('userUsername').readOnly = true;
+      document.getElementById('userPassword').value = u.password || '';
+      document.getElementById('userRole').value = u.role || 'Operator';
+      document.getElementById('userStatus').value = u.status || 'ACTIVE';
+
+      document.getElementById('user-modal-title').innerText = "පරිශීලක සංස්කරණය";
+      openModal('user-modal');
+    };
+
+    document.getElementById('user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const uId = document.getElementById('userId').value;
+      const username = document.getElementById('userUsername').value.trim();
+
+      const userData = {
+        username,
+        password: document.getElementById('userPassword').value,
+        role: document.getElementById('userRole').value,
+        status: document.getElementById('userStatus').value,
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if(uId) {
+          await updateDoc(doc(db, "users", uId), userData);
+        } else {
+          userData.createdAt = Timestamp.now();
+          await setDoc(doc(db, "users", username), userData);
+        }
+        alert("පරිශීලක විස්තර සාර්ථකව සුරැකින ලදී!");
+        closeModal('user-modal');
+      } catch(err) { alert(err.message); }
+    });
+
+    // Employee Form Submission
+    document.getElementById('employee-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const empNo = document.getElementById('empNo').value.trim();
+      const isEdit = document.getElementById('isEditMode').value === "true";
+
+      const empData = {
+        empNo,
+        fullName: document.getElementById('empName').value,
+        nic: document.getElementById('empNic').value,
+        companyId: document.getElementById('empCompany').value,
+        branchId: document.getElementById('empBranch').value,
+        departmentId: document.getElementById('empDepartment').value,
+        designation: document.getElementById('empDesignation').value,
+        dateOfRegister: document.getElementById('empDateReg').value,
+        status: document.getElementById('empStatus').value,
+        serviceEndedDate: document.getElementById('empServiceEndedDate').value || null,
+        updatedAt: Timestamp.now()
+      };
+
+      if (!isEdit) empData.createdAt = Timestamp.now();
+
+      try {
+        await setDoc(doc(db, "employees", empNo), empData, { merge: true });
+        alert("සේවක තොරතුරු සුරැකින ලදී!");
+        closeModal('employee-modal');
+      } catch (err) { alert("දෝෂයක් සිදු විය: " + err.message); }
+    });
+
+    // Transaction Form Submission
+    document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const docId = document.getElementById('txnDocId').value;
+
+      const txData = {
+        type: document.getElementById('txnType').value,
+        category: document.getElementById('txnCategory').value,
+        amount: parseFloat(document.getElementById('txnAmount').value),
+        paymentMode: document.getElementById('txnPaymentMode').value,
+        date: document.getElementById('txnDate').value,
+        empNo: document.getElementById('txnEmpNo').value.trim() || null,
+        description: document.getElementById('txnDesc').value,
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if (docId) {
+          await updateDoc(doc(db, "transactions", docId), txData);
+          alert("Transaction එක සාර්ථකව යාවත්කාලීන කරන ලදී!");
+        } else {
+          txData.txnNo = window.generateNextTxnNo();
+          txData.createdAt = Timestamp.now();
+          await addDoc(collection(db, "transactions"), txData);
+          alert("Transaction එක සාර්ථකව එක් කරන ලදී! Txn No: " + txData.txnNo);
+        }
+        closeModal('transaction-modal');
+      } catch (err) { alert("දෝෂයක් සිදු විය: " + err.message); }
+    });
+
+    // Transaction Helpers
+    window.openTxnModalForAdd = function() {
+      document.getElementById('transaction-form').reset();
+      document.getElementById('txnDocId').value = "";
+      document.getElementById('txn-modal-title').innerText = "නව Transaction එකක් සටහන් කිරීම";
+      document.getElementById('txn-submit-btn').innerText = "Save Transaction";
+      document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+      
+      const nextNo = window.generateNextTxnNo();
+      document.getElementById('txnNoDisplay').value = nextNo;
+      openModal('transaction-modal');
+    };
+
+    window.editTransaction = function(txnId) {
+      const tx = window.transactionsMap[txnId];
+      if(!tx) return;
+
+      document.getElementById('txnDocId').value = txnId;
+      document.getElementById('txnNoDisplay').value = tx.txnNo || tx.id;
+      document.getElementById('txn-modal-title').innerText = "Transaction එක සංස්කරණය";
+      document.getElementById('txn-submit-btn').innerText = "Update Transaction";
+
+      document.getElementById('txnType').value = tx.type || 'INCOME';
+      document.getElementById('txnCategory').value = tx.category || 'MONTHLY_FEE';
+      document.getElementById('txnAmount').value = tx.amount || '';
+      document.getElementById('txnPaymentMode').value = tx.paymentMode || 'CASH';
+      document.getElementById('txnDate').value = tx.date || '';
+      document.getElementById('txnEmpNo').value = tx.empNo || '';
+      document.getElementById('txnDesc').value = tx.description || '';
+
+      openModal('transaction-modal');
+    };
+
+    window.viewVoucher = function(txnId) {
+      const tx = window.transactionsMap[txnId];
+      if(!tx) return;
+
+      const empName = tx.empNo && window.employeesMap[tx.empNo] ? ` (${window.employeesMap[tx.empNo].fullName})` : '';
+
+      document.getElementById('v-no').innerText = tx.txnNo || tx.id;
+      document.getElementById('v-type').innerText = tx.type || '-';
+      document.getElementById('v-type').className = tx.type === 'INCOME' ? 'font-bold text-emerald-600' : 'font-bold text-red-600';
+      document.getElementById('v-date').innerText = tx.date || '-';
+      document.getElementById('v-mode').innerText = tx.paymentMode || 'CASH';
+      document.getElementById('v-emp').innerText = (tx.empNo || 'N/A') + empName;
+      document.getElementById('v-category').innerText = tx.category || '-';
+      document.getElementById('v-desc').innerText = tx.description || 'N/A';
+      document.getElementById('v-amount').innerText = `LKR ${parseFloat(tx.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+      openModal('voucher-modal');
+    };
+
+    window.openEmployeeModalForAdd = function() {
+      document.getElementById('employee-form').reset();
+      document.getElementById('isEditMode').value = "false";
+      document.getElementById('employee-modal-title').innerText = "නව සේවකයෙකු ලියාපදිංචි කිරීම";
+      document.getElementById('employee-submit-btn').innerText = "Save Employee";
+      document.getElementById('empNo').readOnly = false;
+      document.getElementById('empNo').classList.remove('bg-slate-100', 'cursor-not-allowed');
+      document.getElementById('empDateReg').value = new Date().toISOString().split('T')[0];
+      openModal('employee-modal');
+    };
+
+    window.editEmployee = function(empNo) {
+      const emp = window.employeesMap[empNo];
+      if (!emp) return;
+
+      document.getElementById('isEditMode').value = "true";
+      document.getElementById('employee-modal-title').innerText = `සේවක තොරතුරු සංස්කරණය (${empNo})`;
+      document.getElementById('employee-submit-btn').innerText = "Update Employee";
+
+      document.getElementById('empNo').value = emp.empNo;
+      document.getElementById('empNo').readOnly = true;
+      document.getElementById('empNo').classList.add('bg-slate-100', 'cursor-not-allowed');
+
+      document.getElementById('empName').value = emp.fullName || '';
+      document.getElementById('empNic').value = emp.nic || '';
+      document.getElementById('empCompany').value = emp.companyId || '';
+      document.getElementById('empBranch').value = emp.branchId || '';
+      document.getElementById('empDepartment').value = emp.departmentId || '';
+      document.getElementById('empDesignation').value = emp.designation || '';
+      document.getElementById('empStatus').value = emp.status || 'ACTIVE';
+      document.getElementById('empDateReg').value = emp.dateOfRegister || '';
+      document.getElementById('empServiceEndedDate').value = emp.serviceEndedDate || '';
+
+      openModal('employee-modal');
+    };
+
+    // Advanced Reports Engine
+    window.renderReports = function() {
+      const filters = document.getElementById('report-filters-container');
+      const body = document.getElementById('report-body-render');
+      const title = document.getElementById('report-heading-title');
+      const subtitle = document.getElementById('report-period-subtitle');
+
+      if(window.activeReportType === 'inc_exp') {
+        title.innerText = "Income & Expenditure Statement (ආදායම් සහ වියදම් වාර්තාව)";
+        const from = document.getElementById('rpt-from-date')?.value || '';
+        const to = document.getElementById('rpt-to-date')?.value || '';
+        subtitle.innerText = `Period: ${from || 'All Time'} to ${to || 'Today'}`;
+
+        filters.innerHTML = `
+          <div>
+            <label class="font-semibold block">From Date</label>
+            <input type="date" id="rpt-from-date" onchange="window.renderReports()" class="w-full border p-1 rounded" value="${from}">
+          </div>
+          <div>
+            <label class="font-semibold block">To Date</label>
+            <input type="date" id="rpt-to-date" onchange="window.renderReports()" class="w-full border p-1 rounded" value="${to}">
+          </div>
+        `;
+
+        let list = Object.values(window.transactionsMap);
+        if(from) list = list.filter(t => t.date >= from);
+        if(to) list = list.filter(t => t.date <= to);
+
+        let incTot = 0, expTot = 0;
+        list.forEach(t => {
+          if(t.type === 'INCOME') incTot += parseFloat(t.amount || 0);
+          else if(t.type === 'EXPENSE') expTot += parseFloat(t.amount || 0);
+        });
+
+        body.innerHTML = `
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+              <p class="text-xs uppercase text-emerald-600 font-bold">Total Income</p>
+              <p class="text-2xl font-bold text-emerald-700">LKR ${incTot.toFixed(2)}</p>
+            </div>
+            <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+              <p class="text-xs uppercase text-red-600 font-bold">Total Expenses</p>
+              <p class="text-2xl font-bold text-red-700">LKR ${expTot.toFixed(2)}</p>
+            </div>
+          </div>
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="border-b bg-slate-100 text-xs">
+                <th class="p-2">TXN No</th><th class="p-2">Date</th><th class="p-2">Type</th><th class="p-2">Category</th><th class="p-2 text-right">Amount (LKR)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              ${list.map(t => `
+                <tr>
+                  <td class="p-2 font-mono">${t.txnNo || t.id}</td>
+                  <td class="p-2">${t.date}</td>
+                  <td class="p-2 font-bold ${t.type==='INCOME'?'text-emerald-600':'text-red-500'}">${t.type}</td>
+                  <td class="p-2">${t.category}</td>
+                  <td class="p-2 text-right font-bold">${parseFloat(t.amount).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if(window.activeReportType === 'subscription') {
+        title.innerText = "Monthly Subscription Collection Report (සාමාජික ගාස්තු වාර්තාව)";
+        const month = document.getElementById('rpt-sub-month')?.value || new Date().toISOString().slice(0,7);
+        subtitle.innerText = `Month: ${month}`;
+
+        filters.innerHTML = `
+          <div>
+            <label class="font-semibold block">Select Month</label>
+            <input type="month" id="rpt-sub-month" onchange="window.renderReports()" class="w-full border p-1 rounded" value="${month}">
+          </div>
+        `;
+
+        const paidEmps = new Set();
+        Object.values(window.transactionsMap).forEach(t => {
+          if(t.category === 'MONTHLY_FEE' && t.date && t.date.startsWith(month) && t.empNo) {
+            paidEmps.add(t.empNo);
+          }
+        });
+
+        const activeEmps = Object.values(window.employeesMap).filter(e => e.status === 'ACTIVE');
+
+        body.innerHTML = `
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="border-b bg-slate-100 text-xs">
+                <th class="p-2">EMP No</th><th class="p-2">Name</th><th class="p-2">Company</th><th class="p-2">Subscription Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              ${activeEmps.map(e => {
+                const isPaid = paidEmps.has(e.empNo);
+                const cName = window.companiesMap[e.companyId] ? window.companiesMap[e.companyId].companyName : '-';
+                return `
+                  <tr>
+                    <td class="p-2 font-bold">${e.empNo}</td>
+                    <td class="p-2">${e.fullName}</td>
+                    <td class="p-2">${cName}</td>
+                    <td class="p-2">
+                      <span class="px-2 py-0.5 text-xs rounded font-bold ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                        ${isPaid ? 'PAID' : 'UNPAID'}
+                      </span>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if(window.activeReportType === 'benefit_history') {
+        title.innerText = "Employee Benefit History (සුභසාධක ප්‍රතිලාභ ලැයිස්තුව)";
+        const selEmp = document.getElementById('rpt-benefit-emp')?.value || '';
+
+        filters.innerHTML = `
+          <div>
+            <label class="font-semibold block">Select Employee</label>
+            <select id="rpt-benefit-emp" onchange="window.renderReports()" class="w-full border p-1 rounded">
+              <option value="">All Employees</option>
+              ${Object.values(window.employeesMap).map(e => `<option value="${e.empNo}" ${selEmp===e.empNo?'selected':''}>${e.empNo} -${e.fullName}</option>`).join('')}
+            </select>
+          </div>
+        `;
+
+        let benefits = Object.values(window.transactionsMap).filter(t => t.type === 'EXPENSE' && t.category === 'BENEFIT_PAYMENT');
+        if(selEmp) benefits = benefits.filter(b => b.empNo === selEmp);
+
+        body.innerHTML = `
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="border-b bg-slate-100 text-xs">
+                <th class="p-2">Date</th><th class="p-2">EMP No</th><th class="p-2">Name</th><th class="p-2">Description</th><th class="p-2 text-right">Benefit Amount (LKR)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              ${benefits.map(b => {
+                const eName = b.empNo && window.employeesMap[b.empNo] ? window.employeesMap[b.empNo].fullName : '-';
+                return `
+                  <tr>
+                    <td class="p-2">${b.date}</td>
+                    <td class="p-2 font-bold">${b.empNo || '-'}</td>
+                    <td class="p-2">${eName}</td>
+                    <td class="p-2">${b.description || '-'}</td>
+                    <td class="p-2 text-right font-bold text-red-600">${parseFloat(b.amount).toFixed(2)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    };
+
+    window.exportActiveReportExcel = function() {
+      const table = document.querySelector("#report-print-area table");
+      if(!table) return alert("No table found to export.");
+      const wb = XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb, `${window.activeReportType}_Report.xlsx`);
+    };
+  </script>
+
+  <!-- Global UI Switchers -->
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => {
+        el.classList.remove('bg-emerald-600', 'text-white');
+        el.classList.add('text-slate-300');
+      });
+
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      const activeNav = document.getElementById('nav-' + tabId);
+      if(activeNav) {
+        activeNav.classList.add('bg-emerald-600', 'text-white');
+        activeNav.classList.remove('text-slate-300');
+      }
+
+      document.getElementById('page-title').innerText = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+    }
+
+    function switchMasterSubTab(subTabId) {
+      document.querySelectorAll('.subtab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.subnav-btn').forEach(el => {
+        el.classList.remove('border-emerald-600', 'text-emerald-600');
+        el.classList.add('border-transparent', 'text-slate-500');
+      });
+
+      document.getElementById('subtab-' + subTabId).classList.remove('hidden');
+      const activeBtn = document.getElementById('subnav-' + subTabId);
+      if(activeBtn) {
+        activeBtn.classList.add('border-emerald-600', 'text-emerald-600');
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+      }
+    }
+
+    function switchReportType(type) {
+      window.activeReportType = type;
+      document.querySelectorAll('[id^="rpt-btn-"]').forEach(btn => {
+        btn.classList.remove('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+        btn.classList.add('bg-slate-50', 'text-slate-700');
+      });
+
+      const activeBtn = document.getElementById('rpt-btn-' + type);
+      if(activeBtn) {
+        activeBtn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+        activeBtn.classList.remove('bg-slate-50', 'text-slate-700');
+      }
+
+      if(window.renderReports) window.renderReports();
+    }
+
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.remove('hidden');
+      document.getElementById(modalId).classList.add('flex');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+      document.getElementById(modalId).classList.remove('flex');
+    }
+  </script>
+</body>
+</html>
