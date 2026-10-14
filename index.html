@@ -17,10 +17,10 @@
       body * {
         visibility: hidden;
       }
-      #printable-voucher, #printable-voucher *, #report-print-area, #report-print-area * {
+      #printable-voucher, #printable-voucher *, #report-print-area, #report-print-area *, #printable-benefits-report, #printable-benefits-report * {
         visibility: visible;
       }
-      #printable-voucher, #report-print-area {
+      #printable-voucher, #report-print-area, #printable-benefits-report {
         position: absolute;
         left: 0;
         top: 0;
@@ -91,6 +91,9 @@
           </button>
           <button onclick="switchTab('employees')" id="nav-employees" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-users w-6"></i> Employees
+          </button>
+          <button onclick="switchTab('benefits')" id="nav-benefits" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-hand-holding-heart w-6"></i> Member Benefit Categories
           </button>
           <button onclick="switchTab('masterdata')" id="nav-masterdata" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-sitemap w-6"></i> Companies, Branches & Depts
@@ -288,6 +291,43 @@
           </div>
         </section>
 
+        <!-- TAB NEW: MEMBER BENEFIT CATEGORIES -->
+        <section id="tab-benefits" class="tab-content hidden space-y-6">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-4">
+              <div>
+                <h3 class="text-lg font-bold text-slate-800">Member Benefit Categories</h3>
+                <p class="text-xs text-slate-500">සමිතියෙන් ලබාදෙන ප්‍රතිලාභ වර්ග කළමනාකරණය (Create / Edit / Delete)</p>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="window.printActiveBenefitsReport()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1">
+                  <i class="fa-solid fa-print"></i> Active Benefits Report
+                </button>
+                <button onclick="window.openBenefitModalForAdd()" class="action-btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1">
+                  <i class="fa-solid fa-plus"></i> + Add Benefit Category
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase">
+                    <th class="py-3 px-2">Benefit Name</th>
+                    <th class="py-3 px-2">Description</th>
+                    <th class="py-3 px-2 text-right">Default Amount (LKR)</th>
+                    <th class="py-3 px-2">Status</th>
+                    <th class="py-3 px-2 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="benefit-table-body" class="divide-y divide-slate-100 text-sm">
+                  <tr><td colspan="5" class="text-center py-4 text-slate-400">Loading Benefits...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- TAB 3: COMPANIES, BRANCHES & DEPARTMENTS VIEW -->
         <section id="tab-masterdata" class="tab-content hidden space-y-6">
           <div class="flex border-b border-slate-200 gap-4 mb-4">
@@ -414,6 +454,7 @@
                     <th class="py-3 px-2">Date</th>
                     <th class="py-3 px-2">Type</th>
                     <th class="py-3 px-2">Category</th>
+                    <th class="py-3 px-2">Benefit Category</th>
                     <th class="py-3 px-2">EMP No / Name</th>
                     <th class="py-3 px-2">Payment Mode</th>
                     <th class="py-3 px-2 text-right">Amount (LKR)</th>
@@ -421,7 +462,7 @@
                   </tr>
                 </thead>
                 <tbody id="transaction-table-body" class="divide-y divide-slate-100 text-sm">
-                  <tr><td colspan="8" class="text-center py-4 text-slate-400">දත්ත ලෝඩ් වෙමින් පවතී...</td></tr>
+                  <tr><td colspan="9" class="text-center py-4 text-slate-400">දත්ත ලෝඩ් වෙමින් පවතී...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -580,7 +621,7 @@
 
   <!-- MODAL 2: ADD / EDIT TRANSACTION -->
   <div id="transaction-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 id="txn-modal-title" class="text-lg font-bold text-slate-800">නව Transaction එකක් සටහන් කිරීම</h3>
         <button onclick="closeModal('transaction-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
@@ -594,16 +635,17 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Transaction Type</label>
-            <select id="txnType" class="w-full border rounded-lg p-2 text-sm">
+            <select id="txnType" onchange="window.handleTxnCategoryChange()" class="w-full border rounded-lg p-2 text-sm">
               <option value="INCOME">INCOME (ආදායම්)</option>
               <option value="EXPENSE">EXPENSE (වියදම්/ප්‍රතිලාභ)</option>
             </select>
           </div>
         </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
-            <select id="txnCategory" class="w-full border rounded-lg p-2 text-sm">
+            <select id="txnCategory" onchange="window.handleTxnCategoryChange()" class="w-full border rounded-lg p-2 text-sm">
               <option value="MONTHLY_FEE">Monthly Membership Fee</option>
               <option value="REGISTRATION_FEE">Registration Fee</option>
               <option value="DONATION">Donation / Aid</option>
@@ -611,12 +653,19 @@
               <option value="OTHER_EXPENSE">Other Expense</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (LKR) *</label>
-            <input type="number" id="txnAmount" step="0.01" required placeholder="500.00" class="w-full border rounded-lg p-2 text-sm">
+          <div id="txn-benefit-cat-wrapper" class="hidden">
+            <label class="block text-xs font-semibold text-emerald-700 mb-1">Benefit Category *</label>
+            <select id="txnBenefitCategory" onchange="window.handleBenefitCategorySelect()" class="w-full border border-emerald-300 bg-emerald-50/50 rounded-lg p-2 text-sm font-semibold text-slate-800">
+              <option value="">Select Benefit Category</option>
+            </select>
           </div>
         </div>
+
         <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (LKR) *</label>
+            <input type="number" id="txnAmount" step="0.01" required placeholder="500.00" class="w-full border rounded-lg p-2 text-sm font-bold text-slate-800">
+          </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Payment Mode</label>
             <select id="txnPaymentMode" class="w-full border rounded-lg p-2 text-sm">
@@ -625,19 +674,36 @@
               <option value="CHEQUE">CHEQUE</option>
             </select>
           </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
             <input type="date" id="txnDate" required class="w-full border rounded-lg p-2 text-sm">
           </div>
+          <div>
+            <!-- Related EMP No field with Realtime Indicator & Info Button -->
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Related EMP No (Optional)</label>
+            <input type="text" id="txnEmpNo" oninput="window.handleEmpLookupRealtime()" placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm">
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Related EMP No (Optional)</label>
-          <input type="text" id="txnEmpNo" placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm">
+
+        <!-- Realtime EMP Indicator Box -->
+        <div id="emp-lookup-status-container" class="hidden flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
+          <div class="flex items-center gap-1.5 overflow-hidden">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-sm shrink-0"></i>
+            <span id="emp-lookup-name" class="font-bold text-blue-600 truncate">Employee Name</span>
+          </div>
+          <button type="button" onclick="window.showEmpBenefitsHistoryModal()" title="View Employee Benefits History" class="bg-blue-600 hover:bg-blue-700 text-white p-1 px-2.5 rounded text-[11px] font-semibold flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-circle-info"></i> Info
+          </button>
         </div>
+
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Description / සටහන</label>
           <input type="text" id="txnDesc" placeholder="Monthly fee for Oct 2026" class="w-full border rounded-lg p-2 text-sm">
         </div>
+
         <div class="flex justify-end gap-2 pt-3 border-t">
           <button type="button" onclick="closeModal('transaction-modal')" class="px-4 py-2 border rounded-lg text-slate-600">Cancel</button>
           <button type="submit" id="txn-submit-btn" class="action-btn px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Save Transaction</button>
@@ -646,7 +712,40 @@
     </div>
   </div>
 
-  <!-- MODAL 3: COMPANY MODAL -->
+  <!-- MODAL 3: BENEFIT CATEGORY MODAL -->
+  <div id="benefit-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+      <h3 id="benefit-modal-title" class="text-lg font-bold text-slate-800">Benefit Category එකක් එක් කිරීම</h3>
+      <form id="benefit-form" class="space-y-3 text-sm">
+        <input type="hidden" id="benefitId" value="">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Benefit Name *</label>
+          <input type="text" id="benefitName" required placeholder="Medical Aid / Death Donation" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Description (විස්තරය)</label>
+          <textarea id="benefitDescription" rows="2" placeholder="Details regarding benefit eligibility" class="w-full border rounded-lg p-2"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Default Amount (LKR) *</label>
+          <input type="number" id="benefitAmount" step="0.01" required placeholder="10000.00" class="w-full border rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+          <select id="benefitStatus" class="w-full border rounded-lg p-2">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('benefit-modal')" class="px-3 py-1.5 border rounded-lg">Cancel</button>
+          <button type="submit" class="action-btn px-3 py-1.5 bg-emerald-600 text-white rounded-lg">Save Benefit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: COMPANY MODAL -->
   <div id="company-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
       <h3 id="company-modal-title" class="text-lg font-bold text-slate-800">Company එකක් එකතු කිරීම</h3>
@@ -679,7 +778,7 @@
     </div>
   </div>
 
-  <!-- MODAL 4: BRANCH MODAL -->
+  <!-- MODAL 5: BRANCH MODAL -->
   <div id="branch-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
       <h3 id="branch-modal-title" class="text-lg font-bold text-slate-800">ශාඛාවක් ඇතුළත් කිරීම</h3>
@@ -705,7 +804,7 @@
     </div>
   </div>
 
-  <!-- MODAL 5: DEPT MODAL -->
+  <!-- MODAL 6: DEPT MODAL -->
   <div id="dept-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
       <h3 id="dept-modal-title" class="text-lg font-bold text-slate-800">දෙපාර්තමේන්තුවක් එකතු කිරීම</h3>
@@ -723,7 +822,7 @@
     </div>
   </div>
 
-  <!-- MODAL 6: USER MANAGEMENT MODAL -->
+  <!-- MODAL 7: USER MANAGEMENT MODAL -->
   <div id="user-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
       <h3 id="user-modal-title" class="text-lg font-bold text-slate-800">නව පරිශීලකයෙකු එක් කිරීම</h3>
@@ -760,7 +859,39 @@
     </div>
   </div>
 
-  <!-- MODAL 7: PAYMENT VOUCHER MODAL -->
+  <!-- MODAL 8: EMPLOYEE BENEFIT HISTORY POPUP -->
+  <div id="emp-benefit-history-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">Employee Benefits History</h3>
+          <p id="emp-history-modal-sub" class="text-xs text-slate-500"></p>
+        </div>
+        <button onclick="closeModal('emp-benefit-history-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b bg-slate-100 text-xs text-slate-500 uppercase">
+              <th class="py-2.5 px-2">Txn No</th>
+              <th class="py-2.5 px-2">Date</th>
+              <th class="py-2.5 px-2">Benefit Category</th>
+              <th class="py-2.5 px-2">Description</th>
+              <th class="py-2.5 px-2 text-right">Amount (LKR)</th>
+            </tr>
+          </thead>
+          <tbody id="emp-history-modal-table-body" class="divide-y divide-slate-100">
+            <tr><td colspan="5" class="text-center py-4 text-slate-400">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex justify-end pt-2">
+        <button onclick="closeModal('emp-benefit-history-modal')" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-semibold">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 9: PAYMENT VOUCHER MODAL -->
   <div id="voucher-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3 no-print">
@@ -801,6 +932,10 @@
             <span id="v-category" class="col-span-2 font-medium text-slate-800"></span>
           </div>
           <div class="grid grid-cols-3 gap-2">
+            <span class="font-semibold text-slate-600">Benefit Category:</span>
+            <span id="v-benefit-category" class="col-span-2 font-bold text-emerald-700"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
             <span class="font-semibold text-slate-600">Description:</span>
             <span id="v-desc" class="col-span-2 text-slate-700"></span>
           </div>
@@ -820,10 +955,28 @@
     </div>
   </div>
 
+  <!-- PRINTABLE ACTIVE BENEFITS REPORT CONTAINER -->
+  <div id="printable-benefits-report" class="hidden p-6 space-y-4">
+    <div class="text-center border-b pb-4">
+      <h2 class="text-2xl font-bold text-slate-900">වික්‍රමරත්න සමූහ ව්‍යාපාරය - සේවක සුභසාධක සමිතිය</h2>
+      <p class="text-sm font-bold text-emerald-700">Active Member Benefit Categories Report</p>
+    </div>
+    <table class="w-full text-left text-sm border-collapse border border-slate-300">
+      <thead>
+        <tr class="bg-slate-100 text-xs uppercase border-b border-slate-300">
+          <th class="p-2 border-r">Benefit Name</th>
+          <th class="p-2 border-r">Description</th>
+          <th class="p-2 text-right">Default Amount (LKR)</th>
+        </tr>
+      </thead>
+      <tbody id="benefits-report-table-body" class="divide-y divide-slate-200"></tbody>
+    </table>
+  </div>
+
   <!-- FIREBASE SDKs & Application Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, onSnapshot, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBmVTh1xUTkBQFsRf2mAj67QhLqwOE8PkQ",
@@ -844,6 +997,7 @@
     window.departmentsMap = {};
     window.employeesMap = {};
     window.transactionsMap = {};
+    window.benefitsMap = {};
     window.usersMap = {};
 
     window.currentUser = null;
@@ -851,6 +1005,17 @@
 
     document.getElementById('empDateReg').value = new Date().toISOString().split('T')[0];
     document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+
+    // Auto-Set 30-Day Date Range for Transactions Search on Load
+    function initializeTxnDateFilters() {
+      const today = new Date();
+      const past30 = new Date();
+      past30.setDate(today.getDate() - 30);
+
+      document.getElementById('txn-search-to').value = today.toISOString().split('T')[0];
+      document.getElementById('txn-search-from').value = past30.toISOString().split('T')[0];
+    }
+    initializeTxnDateFilters();
 
     // Helper to generate Next Transaction Number "WWS-0000000001"
     window.generateNextTxnNo = function() {
@@ -891,10 +1056,10 @@
 
     initUsersSchema();
 
-    // Login Handle
+    // Case-Insensitive Login Handle
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const u = document.getElementById('login-username').value.trim();
+      const u = document.getElementById('login-username').value.trim().toLowerCase();
       const p = document.getElementById('login-password').value;
       const errorDiv = document.getElementById('login-error');
 
@@ -906,7 +1071,7 @@
 
         usersSnap.forEach(docSnap => {
           const usr = docSnap.data();
-          if (usr.username === u && usr.password === p) {
+          if (usr.username && usr.username.toLowerCase() === u && usr.password === p) {
             matchedUser = usr;
           }
         });
@@ -981,6 +1146,194 @@
         });
       }
     }
+
+    // Realtime Listener for Member Benefit Categories Collection ("benefits")
+    onSnapshot(collection(db, "benefits"), (snapshot) => {
+      const bBody = document.getElementById('benefit-table-body');
+      const txnBenSelect = document.getElementById('txnBenefitCategory');
+      
+      if (bBody) bBody.innerHTML = '';
+      if (txnBenSelect) txnBenSelect.innerHTML = '<option value="">Select Benefit Category</option>';
+      
+      window.benefitsMap = {};
+
+      snapshot.forEach(docSnap => {
+        const b = { id: docSnap.id, ...docSnap.data() };
+        window.benefitsMap[docSnap.id] = b;
+
+        if (bBody) {
+          bBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-2 font-bold text-slate-800">${b.benefitName}</td>
+              <td class="py-3 px-2 text-slate-500">${b.description || '-'}</td>
+              <td class="py-3 px-2 text-right font-bold text-slate-700">${parseFloat(b.amount || 0).toFixed(2)}</td>
+              <td class="py-3 px-2">
+                <span class="px-2 py-0.5 text-xs rounded ${b.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} font-semibold">${b.status}</span>
+              </td>
+              <td class="py-3 px-2 text-center flex justify-center gap-1">
+                <button onclick="window.openBenefitModalForEdit('${b.id}')" class="action-btn px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border">Edit</button>
+                <button onclick="window.deleteBenefitCategory('${b.id}')" class="action-btn px-2 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-200">Delete</button>
+              </td>
+            </tr>
+          `;
+        }
+
+        if (b.status === 'ACTIVE' && txnBenSelect) {
+          txnBenSelect.innerHTML += `<option value="${b.benefitName}">${b.benefitName}</option>`;
+        }
+      });
+
+      applyUserPermissions();
+      if (window.renderReports) window.renderReports();
+    });
+
+    // Benefits Category CRUD Functions
+    window.openBenefitModalForAdd = function() {
+      document.getElementById('benefit-form').reset();
+      document.getElementById('benefitId').value = "";
+      document.getElementById('benefit-modal-title').innerText = "Benefit Category එකක් එක් කිරීම";
+      openModal('benefit-modal');
+    };
+
+    window.openBenefitModalForEdit = function(id) {
+      const b = window.benefitsMap[id];
+      if (!b) return;
+      document.getElementById('benefitId').value = id;
+      document.getElementById('benefitName').value = b.benefitName || '';
+      document.getElementById('benefitDescription').value = b.description || '';
+      document.getElementById('benefitAmount').value = b.amount || '';
+      document.getElementById('benefitStatus').value = b.status || 'ACTIVE';
+      document.getElementById('benefit-modal-title').innerText = "Benefit Category එක සංස්කරණය";
+      openModal('benefit-modal');
+    };
+
+    window.deleteBenefitCategory = async function(id) {
+      if(!confirm("මෙම Benefit Category එක ඉවත් කිරීමට අවශ්‍ය බව තහවුරු කරන්න?")) return;
+      try {
+        await deleteDoc(doc(db, "benefits", id));
+        alert("Benefit Category එක සාර්ථකව ඉවත් කරන ලදී!");
+      } catch(err) { alert(err.message); }
+    };
+
+    document.getElementById('benefit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('benefitId').value;
+      const data = {
+        benefitName: document.getElementById('benefitName').value.trim(),
+        description: document.getElementById('benefitDescription').value.trim(),
+        amount: parseFloat(document.getElementById('benefitAmount').value || 0),
+        status: document.getElementById('benefitStatus').value,
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if (id) {
+          await updateDoc(doc(db, "benefits", id), data);
+        } else {
+          data.createdAt = Timestamp.now();
+          await addDoc(collection(db, "benefits"), data);
+        }
+        alert("Benefit Category එක සාර්ථකව සුරැකින ලදී!");
+        closeModal('benefit-modal');
+      } catch (err) { alert(err.message); }
+    });
+
+    // Print Active Benefit Categories Report
+    window.printActiveBenefitsReport = function() {
+      const activeList = Object.values(window.benefitsMap).filter(b => b.status === 'ACTIVE');
+      const tbody = document.getElementById('benefits-report-table-body');
+      tbody.innerHTML = '';
+
+      if (activeList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Active Benefits නොමැත.</td></tr>';
+      } else {
+        activeList.forEach(b => {
+          tbody.innerHTML += `
+            <tr>
+              <td class="p-2 border-r font-bold">${b.benefitName}</td>
+              <td class="p-2 border-r text-slate-600">${b.description || '-'}</td>
+              <td class="p-2 text-right font-bold">${parseFloat(b.amount || 0).toFixed(2)}</td>
+            </tr>
+          `;
+        });
+      }
+      window.print();
+    };
+
+    // Transaction Modal Dynamic Logic & Handlers
+    window.handleTxnCategoryChange = function() {
+      const type = document.getElementById('txnType').value;
+      const cat = document.getElementById('txnCategory').value;
+      const wrapper = document.getElementById('txn-benefit-cat-wrapper');
+
+      if (type === 'EXPENSE' && cat === 'BENEFIT_PAYMENT') {
+        wrapper.classList.remove('hidden');
+      } else {
+        wrapper.classList.add('hidden');
+        document.getElementById('txnBenefitCategory').value = "";
+      }
+    };
+
+    window.handleBenefitCategorySelect = function() {
+      const selectedName = document.getElementById('txnBenefitCategory').value;
+      if (!selectedName) return;
+
+      const matched = Object.values(window.benefitsMap).find(b => b.benefitName === selectedName);
+      if (matched && matched.amount !== undefined) {
+        document.getElementById('txnAmount').value = matched.amount;
+      }
+    };
+
+    // Realtime EMP Lookup in Transaction Form
+    window.handleEmpLookupRealtime = function() {
+      const empNoVal = document.getElementById('txnEmpNo').value.trim().toUpperCase();
+      const statusContainer = document.getElementById('emp-lookup-status-container');
+      const empNameSpan = document.getElementById('emp-lookup-name');
+
+      if (!empNoVal) {
+        statusContainer.classList.add('hidden');
+        return;
+      }
+
+      const matchedEmp = window.employeesMap[empNoVal];
+      if (matchedEmp) {
+        empNameSpan.innerText = matchedEmp.fullName;
+        statusContainer.classList.remove('hidden');
+      } else {
+        statusContainer.classList.add('hidden');
+      }
+    };
+
+    // Show Employee Benefit History Popup Modal
+    window.showEmpBenefitsHistoryModal = function() {
+      const empNoVal = document.getElementById('txnEmpNo').value.trim().toUpperCase();
+      const matchedEmp = window.employeesMap[empNoVal];
+      if (!matchedEmp) return;
+
+      document.getElementById('emp-history-modal-sub').innerText = `EMP: ${matchedEmp.empNo} - ${matchedEmp.fullName}`;
+      const tbody = document.getElementById('emp-history-modal-table-body');
+      tbody.innerHTML = '';
+
+      const empBenefits = Object.values(window.transactionsMap).filter(t => t.empNo === empNoVal && t.type === 'EXPENSE' && t.category === 'BENEFIT_PAYMENT');
+
+      if (empBenefits.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">මෙම සේවකයා ලබාගත් කිසිදු Benefit Payment එකක් හමුවූයේ නැත.</td></tr>';
+      } else {
+        empBenefits.forEach(tx => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="py-2.5 px-2 font-mono text-xs font-bold text-slate-600">${tx.txnNo || tx.id}</td>
+              <td class="py-2.5 px-2 text-slate-500">${tx.date}</td>
+              <td class="py-2.5 px-2 font-semibold text-emerald-700">${tx.benefitCategory || '-'}</td>
+              <td class="py-2.5 px-2 text-slate-600">${tx.description || '-'}</td>
+              <td class="py-2.5 px-2 text-right font-bold text-red-600">${parseFloat(tx.amount || 0).toFixed(2)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      openModal('emp-benefit-history-modal');
+    };
 
     // Users Realtime Listener
     onSnapshot(collection(db, "users"), (snapshot) => {
@@ -1203,7 +1556,7 @@
       if(toDate) list = list.filter(tx => tx.date <= toDate);
 
       if(list.length === 0) {
-        txBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-slate-400">ගනුදෙනු කිසිවක් හමුවූයේ නැත.</td></tr>';
+        txBody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-slate-400">ගනුදෙනු කිසිවක් හමුවූයේ නැත.</td></tr>';
         return;
       }
 
@@ -1218,6 +1571,7 @@
             <td class="py-3 px-2 text-slate-500">${tx.date}</td>
             <td class="py-3 px-2 font-semibold ${isIncome ? 'text-emerald-600' : 'text-red-500'}">${tx.type}</td>
             <td class="py-3 px-2 text-slate-600">${tx.category}</td>
+            <td class="py-3 px-2 text-emerald-700 font-semibold">${tx.benefitCategory || '-'}</td>
             <td class="py-3 px-2 font-mono text-slate-700">${tx.empNo ? `${tx.empNo} (${empName})` : '-'}</td>
             <td class="py-3 px-2 text-slate-500">${tx.paymentMode || 'CASH'}</td>
             <td class="py-3 px-2 text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-red-500'}">
@@ -1240,8 +1594,7 @@
     window.resetTxnFilter = function() {
       document.getElementById('txn-search-no').value = '';
       document.getElementById('txn-search-emp').value = '';
-      document.getElementById('txn-search-from').value = '';
-      document.getElementById('txn-search-to').value = '';
+      initializeTxnDateFilters();
       window.filterTransactions();
     };
 
@@ -1358,6 +1711,7 @@
         "Date": tx.date,
         "Type": tx.type,
         "Category": tx.category,
+        "Benefit Category": tx.benefitCategory || '',
         "EMP No": tx.empNo || '',
         "EMP Name": tx.empNo && window.employeesMap[tx.empNo] ? window.employeesMap[tx.empNo].fullName : '',
         "Payment Mode": tx.paymentMode || 'CASH',
@@ -1577,7 +1931,7 @@
     // Employee Form Submission
     document.getElementById('employee-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const empNo = document.getElementById('empNo').value.trim();
+      const empNo = document.getElementById('empNo').value.trim().toUpperCase();
       const isEdit = document.getElementById('isEditMode').value === "true";
 
       const empData = {
@@ -1607,14 +1961,18 @@
     document.getElementById('transaction-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const docId = document.getElementById('txnDocId').value;
+      const type = document.getElementById('txnType').value;
+      const category = document.getElementById('txnCategory').value;
+      const benefitCategory = (type === 'EXPENSE' && category === 'BENEFIT_PAYMENT') ? document.getElementById('txnBenefitCategory').value : null;
 
       const txData = {
-        type: document.getElementById('txnType').value,
-        category: document.getElementById('txnCategory').value,
+        type,
+        category,
+        benefitCategory,
         amount: parseFloat(document.getElementById('txnAmount').value),
         paymentMode: document.getElementById('txnPaymentMode').value,
         date: document.getElementById('txnDate').value,
-        empNo: document.getElementById('txnEmpNo').value.trim() || null,
+        empNo: document.getElementById('txnEmpNo').value.trim().toUpperCase() || null,
         description: document.getElementById('txnDesc').value,
         updatedAt: Timestamp.now()
       };
@@ -1643,6 +2001,9 @@
       
       const nextNo = window.generateNextTxnNo();
       document.getElementById('txnNoDisplay').value = nextNo;
+
+      window.handleTxnCategoryChange();
+      window.handleEmpLookupRealtime();
       openModal('transaction-modal');
     };
 
@@ -1657,12 +2018,19 @@
 
       document.getElementById('txnType').value = tx.type || 'INCOME';
       document.getElementById('txnCategory').value = tx.category || 'MONTHLY_FEE';
+      
+      window.handleTxnCategoryChange();
+      if (tx.benefitCategory) {
+        document.getElementById('txnBenefitCategory').value = tx.benefitCategory;
+      }
+
       document.getElementById('txnAmount').value = tx.amount || '';
       document.getElementById('txnPaymentMode').value = tx.paymentMode || 'CASH';
       document.getElementById('txnDate').value = tx.date || '';
       document.getElementById('txnEmpNo').value = tx.empNo || '';
       document.getElementById('txnDesc').value = tx.description || '';
 
+      window.handleEmpLookupRealtime();
       openModal('transaction-modal');
     };
 
@@ -1679,6 +2047,7 @@
       document.getElementById('v-mode').innerText = tx.paymentMode || 'CASH';
       document.getElementById('v-emp').innerText = (tx.empNo || 'N/A') + empName;
       document.getElementById('v-category').innerText = tx.category || '-';
+      document.getElementById('v-benefit-category').innerText = tx.benefitCategory || 'N/A';
       document.getElementById('v-desc').innerText = tx.description || 'N/A';
       document.getElementById('v-amount').innerText = `LKR ${parseFloat(tx.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
 
@@ -1836,25 +2205,63 @@
       } else if(window.activeReportType === 'benefit_history') {
         title.innerText = "Employee Benefit History (සුභසාධක ප්‍රතිලාභ ලැයිස්තුව)";
         const selEmp = document.getElementById('rpt-benefit-emp')?.value || '';
+        const searchEmpText = document.getElementById('rpt-benefit-emp-search')?.value || '';
+        const selBenCat = document.getElementById('rpt-benefit-cat-filter')?.value || '';
+
+        subtitle.innerText = `Report Filtered by Specific Criteria`;
 
         filters.innerHTML = `
           <div>
-            <label class="font-semibold block">Select Employee</label>
-            <select id="rpt-benefit-emp" onchange="window.renderReports()" class="w-full border p-1 rounded">
+            <label class="font-semibold block mb-1">Select Employee</label>
+            <select id="rpt-benefit-emp" onchange="window.renderReports()" class="w-full border p-1 rounded text-xs">
               <option value="">All Employees</option>
               ${Object.values(window.employeesMap).map(e => `<option value="${e.empNo}" ${selEmp===e.empNo?'selected':''}>${e.empNo} -${e.fullName}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold block mb-1">Search EMP No / Name</label>
+            <input type="text" id="rpt-benefit-emp-search" oninput="window.renderReports()" placeholder="Type to search realtime..." value="${searchEmpText}" class="w-full border p-1 rounded text-xs">
+          </div>
+          <div>
+            <label class="font-semibold block mb-1">Benefit Category</label>
+            <select id="rpt-benefit-cat-filter" onchange="window.renderReports()" class="w-full border p-1 rounded text-xs">
+              <option value="">All Categories</option>
+              ${Object.values(window.benefitsMap).map(b => `<option value="${b.benefitName}" ${selBenCat===b.benefitName?'selected':''}>${b.benefitName}</option>`).join('')}
             </select>
           </div>
         `;
 
         let benefits = Object.values(window.transactionsMap).filter(t => t.type === 'EXPENSE' && t.category === 'BENEFIT_PAYMENT');
-        if(selEmp) benefits = benefits.filter(b => b.empNo === selEmp);
+
+        if(selEmp) {
+          benefits = benefits.filter(b => b.empNo === selEmp);
+        }
+
+        if(searchEmpText) {
+          const q = searchEmpText.toLowerCase().trim();
+          benefits = benefits.filter(b => {
+            const empName = b.empNo && window.employeesMap[b.empNo] ? window.employeesMap[b.empNo].fullName.toLowerCase() : '';
+            return (b.empNo && b.empNo.toLowerCase().includes(q)) || empName.includes(q);
+          });
+        }
+
+        if(selBenCat) {
+          benefits = benefits.filter(b => b.benefitCategory === selBenCat);
+        }
 
         body.innerHTML = `
           <table class="w-full text-left text-sm border-collapse">
             <thead>
               <tr class="border-b bg-slate-100 text-xs">
-                <th class="p-2">Date</th><th class="p-2">EMP No</th><th class="p-2">Name</th><th class="p-2">Description</th><th class="p-2 text-right">Benefit Amount (LKR)</th>
+                <th class="p-2">TxtNo</th>
+                <th class="p-2">Date</th>
+                <th class="p-2">EMP No</th>
+                <th class="p-2">Name</th>
+                <th class="p-2">Description</th>
+                <th class="p-2 text-right">Benefit Amount (LKR)</th>
+                <th class="p-2">Category</th>
+                <th class="p-2">Benefit Category</th>
+                <th class="p-2">Payment Mode</th>
               </tr>
             </thead>
             <tbody class="divide-y">
@@ -1862,11 +2269,15 @@
                 const eName = b.empNo && window.employeesMap[b.empNo] ? window.employeesMap[b.empNo].fullName : '-';
                 return `
                   <tr>
+                    <td class="p-2 font-mono text-xs font-bold">${b.txnNo || b.id}</td>
                     <td class="p-2">${b.date}</td>
                     <td class="p-2 font-bold">${b.empNo || '-'}</td>
                     <td class="p-2">${eName}</td>
                     <td class="p-2">${b.description || '-'}</td>
                     <td class="p-2 text-right font-bold text-red-600">${parseFloat(b.amount).toFixed(2)}</td>
+                    <td class="p-2 text-xs">${b.category || '-'}</td>
+                    <td class="p-2 font-semibold text-emerald-700">${b.benefitCategory || '-'}</td>
+                    <td class="p-2 text-xs">${b.paymentMode || 'CASH'}</td>
                   </tr>
                 `;
               }).join('')}
@@ -1877,10 +2288,45 @@
     };
 
     window.exportActiveReportExcel = function() {
-      const table = document.querySelector("#report-print-area table");
-      if(!table) return alert("No table found to export.");
-      const wb = XLSX.utils.table_to_book(table);
-      XLSX.writeFile(wb, `${window.activeReportType}_Report.xlsx`);
+      if(window.activeReportType === 'benefit_history') {
+        const selEmp = document.getElementById('rpt-benefit-emp')?.value || '';
+        const searchEmpText = document.getElementById('rpt-benefit-emp-search')?.value || '';
+        const selBenCat = document.getElementById('rpt-benefit-cat-filter')?.value || '';
+
+        let benefits = Object.values(window.transactionsMap).filter(t => t.type === 'EXPENSE' && t.category === 'BENEFIT_PAYMENT');
+
+        if(selEmp) benefits = benefits.filter(b => b.empNo === selEmp);
+        if(searchEmpText) {
+          const q = searchEmpText.toLowerCase().trim();
+          benefits = benefits.filter(b => {
+            const empName = b.empNo && window.employeesMap[b.empNo] ? window.employeesMap[b.empNo].fullName.toLowerCase() : '';
+            return (b.empNo && b.empNo.toLowerCase().includes(q)) || empName.includes(q);
+          });
+        }
+        if(selBenCat) benefits = benefits.filter(b => b.benefitCategory === selBenCat);
+
+        const excelData = benefits.map(b => ({
+          "TxtNo": b.txnNo || b.id,
+          "Date": b.date,
+          "EMP No": b.empNo || '',
+          "Name": b.empNo && window.employeesMap[b.empNo] ? window.employeesMap[b.empNo].fullName : '',
+          "Description": b.description || '',
+          "Benefit Amount (LKR)": b.amount,
+          "Category": b.category || '',
+          "Benefit Category": b.benefitCategory || '',
+          "Payment Mode": b.paymentMode || 'CASH'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Employee_Benefit_History");
+        XLSX.writeFile(wb, "Employee_Benefit_History.xlsx");
+      } else {
+        const table = document.querySelector("#report-print-area table");
+        if(!table) return alert("No table found to export.");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `${window.activeReportType}_Report.xlsx`);
+      }
     };
   </script>
 
@@ -1900,7 +2346,8 @@
         activeNav.classList.remove('text-slate-300');
       }
 
-      document.getElementById('page-title').innerText = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+      const formattedTitle = tabId === 'benefits' ? 'Member Benefit Categories' : tabId.charAt(0).toUpperCase() + tabId.slice(1);
+      document.getElementById('page-title').innerText = formattedTitle;
     }
 
     function switchMasterSubTab(subTabId) {
