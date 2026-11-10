@@ -424,7 +424,7 @@
             <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm bg-slate-50 p-4 rounded-lg">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Search Txn No</label>
-                <input type="text" id="txn-search-no" placeholder="WWS-..." class="w-full border rounded p-2 text-xs">
+                <input type="text" id="txn-search-no" placeholder="INC-... / EXP-..." class="w-full border rounded p-2 text-xs">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">EMP No / Name</label>
@@ -635,7 +635,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Transaction Type</label>
-            <select id="txnType" onchange="window.handleTxnCategoryChange()" class="w-full border rounded-lg p-2 text-sm">
+            <select id="txnType" onchange="window.handleTxnTypeOrCategoryChange()" class="w-full border rounded-lg p-2 text-sm">
               <option value="INCOME">INCOME (ආදායම්)</option>
               <option value="EXPENSE">EXPENSE (වියදම්/ප්‍රතිලාභ)</option>
             </select>
@@ -645,7 +645,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
-            <select id="txnCategory" onchange="window.handleTxnCategoryChange()" class="w-full border rounded-lg p-2 text-sm">
+            <select id="txnCategory" onchange="window.handleTxnTypeOrCategoryChange()" class="w-full border rounded-lg p-2 text-sm">
               <option value="MONTHLY_FEE">Monthly Membership Fee</option>
               <option value="REGISTRATION_FEE">Registration Fee</option>
               <option value="DONATION">Donation / Aid</option>
@@ -1017,19 +1017,21 @@
     }
     initializeTxnDateFilters();
 
-    // Helper to generate Next Transaction Number "WWS-0000000001"
-    window.generateNextTxnNo = function() {
+    // Helper to generate Next Transaction Number based on Type (INC-0000000001 or EXP-0000000001)
+    window.generateNextTxnNo = function(type) {
+      const prefix = type === 'INCOME' ? 'INC-' : 'EXP-';
       let maxNum = 0;
       Object.values(window.transactionsMap).forEach(tx => {
-        if(tx.txnNo && tx.txnNo.startsWith("WWS-")) {
-          const numPart = parseInt(tx.txnNo.replace("WWS-", ""), 10);
+        const tNo = tx.txnNo || tx.id;
+        if(tNo && tNo.startsWith(prefix)) {
+          const numPart = parseInt(tNo.replace(prefix, ""), 10);
           if(!isNaN(numPart) && numPart > maxNum) {
             maxNum = numPart;
           }
         }
       });
       const nextNum = maxNum + 1;
-      return "WWS-" + String(nextNum).padStart(10, '0');
+      return prefix + String(nextNum).padStart(10, '0');
     };
 
     // User Schema Check & Auto-Init Default Admin
@@ -1261,7 +1263,7 @@
     };
 
     // Transaction Modal Dynamic Logic & Handlers
-    window.handleTxnCategoryChange = function() {
+    window.handleTxnTypeOrCategoryChange = function() {
       const type = document.getElementById('txnType').value;
       const cat = document.getElementById('txnCategory').value;
       const wrapper = document.getElementById('txn-benefit-cat-wrapper');
@@ -1271,6 +1273,12 @@
       } else {
         wrapper.classList.add('hidden');
         document.getElementById('txnBenefitCategory').value = "";
+      }
+
+      // Automatically update transaction number prefix when creating a new transaction
+      const docId = document.getElementById('txnDocId').value;
+      if (!docId) {
+        document.getElementById('txnNoDisplay').value = window.generateNextTxnNo(type);
       }
     };
 
@@ -1982,7 +1990,7 @@
           await updateDoc(doc(db, "transactions", docId), txData);
           alert("Transaction එක සාර්ථකව යාවත්කාලීන කරන ලදී!");
         } else {
-          txData.txnNo = window.generateNextTxnNo();
+          txData.txnNo = document.getElementById('txnNoDisplay').value || window.generateNextTxnNo(type);
           txData.createdAt = Timestamp.now();
           await addDoc(collection(db, "transactions"), txData);
           alert("Transaction එක සාර්ථකව එක් කරන ලදී! Txn No: " + txData.txnNo);
@@ -1999,10 +2007,10 @@
       document.getElementById('txn-submit-btn').innerText = "Save Transaction";
       document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
       
-      const nextNo = window.generateNextTxnNo();
-      document.getElementById('txnNoDisplay').value = nextNo;
+      const defaultType = document.getElementById('txnType').value || 'INCOME';
+      document.getElementById('txnNoDisplay').value = window.generateNextTxnNo(defaultType);
 
-      window.handleTxnCategoryChange();
+      window.handleTxnTypeOrCategoryChange();
       window.handleEmpLookupRealtime();
       openModal('transaction-modal');
     };
@@ -2019,7 +2027,7 @@
       document.getElementById('txnType').value = tx.type || 'INCOME';
       document.getElementById('txnCategory').value = tx.category || 'MONTHLY_FEE';
       
-      window.handleTxnCategoryChange();
+      window.handleTxnTypeOrCategoryChange();
       if (tx.benefitCategory) {
         document.getElementById('txnBenefitCategory').value = tx.benefitCategory;
       }
@@ -2215,7 +2223,7 @@
             <label class="font-semibold block mb-1">Select Employee</label>
             <select id="rpt-benefit-emp" onchange="window.renderReports()" class="w-full border p-1 rounded text-xs">
               <option value="">All Employees</option>
-              ${Object.values(window.employeesMap).map(e => `<option value="${e.empNo}" ${selEmp===e.empNo?'selected':''}>${e.empNo} -${e.fullName}</option>`).join('')}
+              ${Object.values(window.employeesMap).map(e => `<option value="${e.empNo}" ${selEmp===e.empNo?'selected':''}>${e.empNo} - ${e.fullName}</option>`).join('')}
             </select>
           </div>
           <div>
