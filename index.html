@@ -562,7 +562,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">EMP No *</label>
-            <input type="text" id="empNo" required placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            <input type="text" id="empNo" onblur="window.checkDuplicateEmpNo()" required placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
@@ -649,6 +649,7 @@
               <option value="MONTHLY_FEE">Monthly Membership Fee</option>
               <option value="REGISTRATION_FEE">Registration Fee</option>
               <option value="DONATION">Donation / Aid</option>
+              <option value="OTHER_INCOME">Other Income</option>
               <option value="BENEFIT_PAYMENT">Benefit Payment</option>
               <option value="OTHER_EXPENSE">Other Expense</option>
             </select>
@@ -678,14 +679,19 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Generated Date *</label>
             <input type="date" id="txnDate" required class="w-full border rounded-lg p-2 text-sm">
           </div>
           <div>
-            <!-- Related EMP No field with Realtime Indicator & Info Button -->
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Related EMP No (Optional)</label>
-            <input type="text" id="txnEmpNo" oninput="window.handleEmpLookupRealtime()" placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Actual Payment / Income Date *</label>
+            <input type="date" id="txnActualDate" required class="w-full border rounded-lg p-2 text-sm">
           </div>
+        </div>
+
+        <div>
+          <!-- Related EMP No field with Realtime Indicator & Info Button -->
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Related EMP No (Optional)</label>
+          <input type="text" id="txnEmpNo" oninput="window.handleEmpLookupRealtime()" placeholder="WPL01001" class="w-full border rounded-lg p-2 text-sm">
         </div>
 
         <!-- Realtime EMP Indicator Box -->
@@ -919,6 +925,7 @@
           <div class="text-right">
             <p><span class="font-bold text-slate-600">Date:</span> <span id="v-date"></span></p>
             <p><span class="font-bold text-slate-600">Payment Mode:</span> <span id="v-mode"></span></p>
+            <p><span class="font-bold text-slate-600">Actual Transaction Date:</span> <span id="v-actual-date" class="font-semibold text-slate-800"></span></p>
           </div>
         </div>
 
@@ -926,6 +933,10 @@
           <div class="grid grid-cols-3 gap-2">
             <span class="font-semibold text-slate-600">EMP No / Member:</span>
             <span id="v-emp" class="col-span-2 font-medium text-slate-800"></span>
+          </div>
+          <div id="v-emp-org-row" class="grid grid-cols-3 gap-2 hidden">
+            <span class="font-semibold text-slate-600">Company / Branch:</span>
+            <span id="v-emp-org" class="col-span-2 font-medium text-slate-700"></span>
           </div>
           <div class="grid grid-cols-3 gap-2">
             <span class="font-semibold text-slate-600">Category:</span>
@@ -951,6 +962,31 @@
           <div class="border-t border-slate-400 pt-1">Approved By</div>
           <div class="border-t border-slate-400 pt-1">Payee/Receiver Signature</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 10: DUPLICATE EMPLOYEE ALERT MODAL -->
+  <div id="duplicate-emp-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-[60]">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 border-t-4 border-amber-500">
+      <div class="flex items-center gap-3 text-amber-600 border-b pb-3">
+        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-lg shrink-0">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-800">Duplicate Employee Number!</h3>
+          <p class="text-xs text-slate-500">මෙම EMP No. එකට අදාළ සේවකයෙකු දැනටමත් පද්ධතියේ සිටී.</p>
+        </div>
+      </div>
+
+      <div id="duplicate-emp-details" class="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2 text-xs text-slate-700">
+        <!-- Populated dynamically -->
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button type="button" onclick="window.closeDuplicateEmpModal()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow transition-all">
+          OK (නැවත EMP No. ඇතුළත් කරන්න)
+        </button>
       </div>
     </div>
   </div>
@@ -1005,6 +1041,7 @@
 
     document.getElementById('empDateReg').value = new Date().toISOString().split('T')[0];
     document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('txnActualDate').value = new Date().toISOString().split('T')[0];
 
     // Auto-Set 30-Day Date Range for Transactions Search on Load
     function initializeTxnDateFilters() {
@@ -1716,7 +1753,8 @@
 
       const excelData = list.map(tx => ({
         "Transaction No": tx.txnNo || tx.id,
-        "Date": tx.date,
+        "Generated Date": tx.date,
+        "Actual Transaction Date": tx.actualDate || tx.date || '',
         "Type": tx.type,
         "Category": tx.category,
         "Benefit Category": tx.benefitCategory || '',
@@ -1936,11 +1974,73 @@
       } catch(err) { alert(err.message); }
     });
 
+    // Realtime Duplicate Employee Number Check on Blur
+    window.checkDuplicateEmpNo = function() {
+      const isEdit = document.getElementById('isEditMode').value === "true";
+      if (isEdit) return false;
+
+      const empNoVal = document.getElementById('empNo').value.trim().toUpperCase();
+      if (!empNoVal) return false;
+
+      const existingEmp = window.employeesMap[empNoVal];
+      if (existingEmp) {
+        const cName = window.companiesMap[existingEmp.companyId] ? window.companiesMap[existingEmp.companyId].companyName : '-';
+        const bName = window.branchesMap[existingEmp.branchId] ? window.branchesMap[existingEmp.branchId].branchName : '-';
+        const dName = window.departmentsMap[existingEmp.departmentId] ? window.departmentsMap[existingEmp.departmentId].deptName : '-';
+
+        document.getElementById('duplicate-emp-details').innerHTML = `
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="font-semibold text-slate-500">EMP No:</span>
+            <span class="font-bold text-emerald-700">${existingEmp.empNo}</span>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="font-semibold text-slate-500">Full Name:</span>
+            <span class="font-bold text-slate-800">${existingEmp.fullName || '-'}</span>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="font-semibold text-slate-500">NIC:</span>
+            <span class="font-medium">${existingEmp.nic || '-'}</span>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="font-semibold text-slate-500">Company:</span>
+            <span class="font-medium">${cName}</span>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="font-semibold text-slate-500">Branch / Dept:</span>
+            <span class="font-medium">${bName} / ${dName}</span>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="font-semibold text-slate-500">Designation:</span>
+            <span class="font-medium">${existingEmp.designation || '-'}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-semibold text-slate-500">Status:</span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${existingEmp.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${existingEmp.status || '-'}</span>
+          </div>
+        `;
+
+        openModal('duplicate-emp-modal');
+        return true;
+      }
+      return false;
+    };
+
+    window.closeDuplicateEmpModal = function() {
+      closeModal('duplicate-emp-modal');
+      const empInput = document.getElementById('empNo');
+      empInput.value = '';
+      setTimeout(() => empInput.focus(), 50);
+    };
+
     // Employee Form Submission
     document.getElementById('employee-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const empNo = document.getElementById('empNo').value.trim().toUpperCase();
       const isEdit = document.getElementById('isEditMode').value === "true";
+
+      if (!isEdit && window.checkDuplicateEmpNo()) {
+        return;
+      }
 
       const empData = {
         empNo,
@@ -1980,6 +2080,7 @@
         amount: parseFloat(document.getElementById('txnAmount').value),
         paymentMode: document.getElementById('txnPaymentMode').value,
         date: document.getElementById('txnDate').value,
+        actualDate: document.getElementById('txnActualDate').value || document.getElementById('txnDate').value,
         empNo: document.getElementById('txnEmpNo').value.trim().toUpperCase() || null,
         description: document.getElementById('txnDesc').value,
         updatedAt: Timestamp.now()
@@ -2005,7 +2106,9 @@
       document.getElementById('txnDocId').value = "";
       document.getElementById('txn-modal-title').innerText = "නව Transaction එකක් සටහන් කිරීම";
       document.getElementById('txn-submit-btn').innerText = "Save Transaction";
-      document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById('txnDate').value = todayStr;
+      document.getElementById('txnActualDate').value = todayStr;
       
       const defaultType = document.getElementById('txnType').value || 'INCOME';
       document.getElementById('txnNoDisplay').value = window.generateNextTxnNo(defaultType);
@@ -2035,6 +2138,7 @@
       document.getElementById('txnAmount').value = tx.amount || '';
       document.getElementById('txnPaymentMode').value = tx.paymentMode || 'CASH';
       document.getElementById('txnDate').value = tx.date || '';
+      document.getElementById('txnActualDate').value = tx.actualDate || tx.date || '';
       document.getElementById('txnEmpNo').value = tx.empNo || '';
       document.getElementById('txnDesc').value = tx.description || '';
 
@@ -2046,14 +2150,28 @@
       const tx = window.transactionsMap[txnId];
       if(!tx) return;
 
-      const empName = tx.empNo && window.employeesMap[tx.empNo] ? ` (${window.employeesMap[tx.empNo].fullName})` : '';
+      const empObj = tx.empNo ? window.employeesMap[tx.empNo] : null;
+      const empName = empObj ? ` (${empObj.fullName})` : '';
 
       document.getElementById('v-no').innerText = tx.txnNo || tx.id;
       document.getElementById('v-type').innerText = tx.type || '-';
       document.getElementById('v-type').className = tx.type === 'INCOME' ? 'font-bold text-emerald-600' : 'font-bold text-red-600';
       document.getElementById('v-date').innerText = tx.date || '-';
       document.getElementById('v-mode').innerText = tx.paymentMode || 'CASH';
+      document.getElementById('v-actual-date').innerText = tx.actualDate || tx.date || '-';
       document.getElementById('v-emp').innerText = (tx.empNo || 'N/A') + empName;
+
+      const orgRow = document.getElementById('v-emp-org-row');
+      const orgSpan = document.getElementById('v-emp-org');
+      if (empObj) {
+        const compName = window.companiesMap[empObj.companyId] ? window.companiesMap[empObj.companyId].companyName : '-';
+        const branchName = window.branchesMap[empObj.branchId] ? window.branchesMap[empObj.branchId].branchName : '-';
+        orgSpan.innerText = `${compName} | ${branchName}`;
+        orgRow.classList.remove('hidden');
+      } else {
+        orgSpan.innerText = '';
+        orgRow.classList.add('hidden');
+      }
       document.getElementById('v-category').innerText = tx.category || '-';
       document.getElementById('v-benefit-category').innerText = tx.benefitCategory || 'N/A';
       document.getElementById('v-desc').innerText = tx.description || 'N/A';
@@ -2109,22 +2227,37 @@
         title.innerText = "Income & Expenditure Statement (ආදායම් සහ වියදම් වාර්තාව)";
         const from = document.getElementById('rpt-from-date')?.value || '';
         const to = document.getElementById('rpt-to-date')?.value || '';
-        subtitle.innerText = `Period: ${from || 'All Time'} to ${to || 'Today'}`;
+        const actFrom = document.getElementById('rpt-actual-from-date')?.value || '';
+        const actTo = document.getElementById('rpt-actual-to-date')?.value || '';
+
+        const genLabel = (from || to) ? `Generated Date: ${from || 'Start'} to ${to || 'Today'}` : 'Generated Date: All Time';
+        const actLabel = (actFrom || actTo) ? ` | Actual Transaction Date: ${actFrom || 'Start'} to ${actTo || 'Today'}` : '';
+        subtitle.innerText = genLabel + actLabel;
 
         filters.innerHTML = `
           <div>
-            <label class="font-semibold block">From Date</label>
-            <input type="date" id="rpt-from-date" onchange="window.renderReports()" class="w-full border p-1 rounded" value="${from}">
+            <label class="font-semibold block mb-1 text-slate-700">Generated From Date</label>
+            <input type="date" id="rpt-from-date" onchange="window.renderReports()" class="w-full border p-1.5 rounded bg-white" value="${from}">
           </div>
           <div>
-            <label class="font-semibold block">To Date</label>
-            <input type="date" id="rpt-to-date" onchange="window.renderReports()" class="w-full border p-1 rounded" value="${to}">
+            <label class="font-semibold block mb-1 text-slate-700">Generated To Date</label>
+            <input type="date" id="rpt-to-date" onchange="window.renderReports()" class="w-full border p-1.5 rounded bg-white" value="${to}">
+          </div>
+          <div>
+            <label class="font-semibold block mb-1 text-emerald-700">Actual Txn From Date</label>
+            <input type="date" id="rpt-actual-from-date" onchange="window.renderReports()" class="w-full border border-emerald-300 p-1.5 rounded bg-emerald-50/40" value="${actFrom}">
+          </div>
+          <div>
+            <label class="font-semibold block mb-1 text-emerald-700">Actual Txn To Date</label>
+            <input type="date" id="rpt-actual-to-date" onchange="window.renderReports()" class="w-full border border-emerald-300 p-1.5 rounded bg-emerald-50/40" value="${actTo}">
           </div>
         `;
 
         let list = Object.values(window.transactionsMap);
-        if(from) list = list.filter(t => t.date >= from);
-        if(to) list = list.filter(t => t.date <= to);
+        if(from) list = list.filter(t => t.date && t.date >= from);
+        if(to) list = list.filter(t => t.date && t.date <= to);
+        if(actFrom) list = list.filter(t => (t.actualDate || t.date) >= actFrom);
+        if(actTo) list = list.filter(t => (t.actualDate || t.date) <= actTo);
 
         let incTot = 0, expTot = 0;
         list.forEach(t => {
@@ -2146,14 +2279,15 @@
           <table class="w-full text-left text-sm border-collapse">
             <thead>
               <tr class="border-b bg-slate-100 text-xs">
-                <th class="p-2">TXN No</th><th class="p-2">Date</th><th class="p-2">Type</th><th class="p-2">Category</th><th class="p-2 text-right">Amount (LKR)</th>
+                <th class="p-2">TXN No</th><th class="p-2">Generated Date</th><th class="p-2">Actual Txn Date</th><th class="p-2">Type</th><th class="p-2">Category</th><th class="p-2 text-right">Amount (LKR)</th>
               </tr>
             </thead>
             <tbody class="divide-y">
               ${list.map(t => `
                 <tr>
                   <td class="p-2 font-mono">${t.txnNo || t.id}</td>
-                  <td class="p-2">${t.date}</td>
+                  <td class="p-2">${t.date || '-'}</td>
+                  <td class="p-2 font-medium text-slate-700">${t.actualDate || t.date || '-'}</td>
                   <td class="p-2 font-bold ${t.type==='INCOME'?'text-emerald-600':'text-red-500'}">${t.type}</td>
                   <td class="p-2">${t.category}</td>
                   <td class="p-2 text-right font-bold">${parseFloat(t.amount).toFixed(2)}</td>
